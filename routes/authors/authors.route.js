@@ -1,4 +1,5 @@
 import express from "express";
+import expressAsyncHandler from "express-async-handler";
 import {
   validateAuthor,
   validateUpdateAuthor,
@@ -14,15 +15,13 @@ const router = express.Router();
  * @access       public
  */
 
-router.get("/", async (req, res) => {
-  try {
+router.get(
+  "/",
+  expressAsyncHandler(async (req, res) => {
     const authorsList = await Author.find();
     res.status(200).json({ authorsList });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "internal server error", error });
-  }
-});
+  }),
+);
 
 /**
  * @description  Get author by id
@@ -31,19 +30,17 @@ router.get("/", async (req, res) => {
  * @access       public
  */
 
-router.get("/:id", async (req, res) => {
-  try {
+router.get(
+  "/:id",
+  expressAsyncHandler(async (req, res) => {
     const author = await Author.findById(req.params.id);
     if (author) {
       res.status(200).json({ author });
     } else {
       res.status(404).json({ message: "Author not found" });
     }
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Internal server error", error });
-  }
-});
+  }),
+);
 
 /**
  * @description  Add a new author
@@ -52,14 +49,15 @@ router.get("/:id", async (req, res) => {
  * @access       public
  */
 
-router.post("/", async (req, res) => {
-  const { error } = validateAuthor(req.body);
+router.post(
+  "/",
+  expressAsyncHandler(async (req, res) => {
+    const { error } = validateAuthor(req.body);
 
-  if (error) {
-    return res.status(400).json({ message: error.message });
-  }
+    if (error) {
+      return res.status(400).json({ message: error.message });
+    }
 
-  try {
     const author = new Author({
       firstName: req.body.firstName,
       lastName: req.body.lastName,
@@ -70,11 +68,8 @@ router.post("/", async (req, res) => {
     res
       .status(201)
       .json({ message: "author added successfully", data: result });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Internal server error", error });
-  }
-});
+  }),
+);
 
 /**
  * @description  Update author using id
@@ -83,14 +78,15 @@ router.post("/", async (req, res) => {
  * @access       public
  */
 
-router.put("/:id", async (req, res) => {
-  const { error } = validateUpdateAuthor(req.body);
+router.put(
+  "/:id",
+  expressAsyncHandler(async (req, res) => {
+    const { error } = validateUpdateAuthor(req.body);
 
-  if (error) {
-    return res.status(400).json({ message: error.message });
-  }
+    if (error) {
+      return res.status(400).json({ message: error.message });
+    }
 
-  try {
     const result = await Author.findByIdAndUpdate(
       req.params.id,
       {
@@ -106,11 +102,8 @@ router.put("/:id", async (req, res) => {
     res
       .status(200)
       .json({ message: "Author updated successfully", data: result });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Internal server error", error });
-  }
-});
+  }),
+);
 
 /**
  * @description  Delete an author using id
@@ -119,8 +112,9 @@ router.put("/:id", async (req, res) => {
  * @access       public
  */
 
-router.delete("/:id", async (req, res) => {
-  try {
+router.delete(
+  "/:id",
+  expressAsyncHandler(async (req, res) => {
     const author = await Author.findById(req.params.id);
 
     if (!author) return res.status(404).json({ message: "Author not found" });
@@ -128,10 +122,7 @@ router.delete("/:id", async (req, res) => {
     await Author.findByIdAndDelete(req.params.id);
 
     res.status(200).json({ message: "Author has been deleted successfully" });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "internal server error", error });
-  }
-});
+  }),
+);
 
 export default router;

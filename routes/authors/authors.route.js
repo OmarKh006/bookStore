@@ -38,8 +38,14 @@ const authors = [
  * @access       public
  */
 
-router.get("/", (req, res) => {
-  res.status(200).json({ allAuthors: authors });
+router.get("/", async (req, res) => {
+  try {
+    const authorsList = await Author.find();
+    res.status(200).json({ authorsList });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "internal server error", error });
+  }
 });
 
 /**
@@ -49,12 +55,17 @@ router.get("/", (req, res) => {
  * @access       public
  */
 
-router.get("/:id", (req, res) => {
-  const author = authors.find((a) => a.id === parseInt(req.params.id));
-  if (author) {
-    res.status(200).json({ author });
-  } else {
-    res.status(404).json({ message: "Author not found" });
+router.get("/:id", async (req, res) => {
+  try {
+    const author = await Author.findById(req.params.id);
+    if (author) {
+      res.status(200).json({ author });
+    } else {
+      res.status(404).json({ message: "Author not found" });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Internal server error", error });
   }
 });
 

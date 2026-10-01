@@ -7,30 +7,6 @@ import { Author } from "../../models/author/Author.model.js";
 
 const router = express.Router();
 
-const authors = [
-  {
-    id: 1,
-    firstName: "fname 1",
-    lastName: "lname 1",
-    nationality: "nationality 1",
-    image: "image1.png",
-  },
-  {
-    id: 2,
-    firstName: "fname 2",
-    lastName: "lname 2",
-    nationality: "nationality 2",
-    image: "image2.png",
-  },
-  {
-    id: 3,
-    firstName: "fname 3",
-    lastName: "lname 3",
-    nationality: "nationality 3",
-    image: "image3.png",
-  },
-];
-
 /**
  * @description  Get All Authors
  * @route        /api/authors
@@ -143,12 +119,19 @@ router.put("/:id", async (req, res) => {
  * @access       public
  */
 
-router.delete("/:id", (req, res) => {
-  const author = authors.find((a) => a.id === parseInt(req.params.id));
+router.delete("/:id", async (req, res) => {
+  try {
+    const author = await Author.findById(req.params.id);
 
-  if (!author) return res.status(404).json({ message: "Author not found" });
+    if (!author) return res.status(404).json({ message: "Author not found" });
 
-  res.status(200).json({ message: "Author has been deleted successfully" });
+    await Author.findByIdAndDelete(req.params.id);
+
+    res.status(200).json({ message: "Author has been deleted successfully" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "internal server error", error });
+  }
 });
 
 export default router;

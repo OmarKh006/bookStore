@@ -5,7 +5,7 @@ const validateAuthor = (obj) => {
     firstName: Joi.string().trim().min(3).max(15).required(),
     lastName: Joi.string().trim().min(3).max(15).required(),
     nationality: Joi.string().trim().min(3).max(25).required(),
-    image: Joi.string().trim().min(5).max(100).required(),
+    image: Joi.string().trim().min(5).max(100),
   });
 
   return schema.validate(obj);

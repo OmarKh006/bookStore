@@ -3,6 +3,7 @@ import {
   validateAuthor,
   validateUpdateAuthor,
 } from "./utils/validateAuthor.js";
+import { Author } from "../../models/author/Author.model.js";
 
 const router = express.Router();
 
@@ -64,22 +65,28 @@ router.get("/:id", (req, res) => {
  * @access       public
  */
 
-router.post("/", (req, res) => {
+router.post("/", async (req, res) => {
   const { error } = validateAuthor(req.body);
 
   if (error) {
     return res.status(400).json({ message: error.message });
   }
 
-  const author = {
-    id: authors.length + 1,
-    firstName: req.body.firstName,
-    lastName: req.body.lastName,
-    nationality: req.body.nationality,
-    image: req.body.image,
-  };
-  authors.push(author);
-  res.status(201).json({ message: "author added successfully", data: author });
+  try {
+    const author = new Author({
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+      nationality: req.body.nationality,
+      image: req.body.image,
+    });
+    const result = await author.save();
+    res
+      .status(201)
+      .json({ message: "author added successfully", data: result });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Internal server error", error });
+  }
 });
 
 /**

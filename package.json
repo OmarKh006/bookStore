@@ -18,7 +18,8 @@
     "start": "nodemon app"
   },
   "dependencies": {
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "joi": "^18.2.9"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

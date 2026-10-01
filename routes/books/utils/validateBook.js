@@ -12,4 +12,16 @@ const validateBook = (obj) => {
   return schema.validate(obj);
 };
 
-export { validateBook };
+const validateUpdateBook = (obj) => {
+  const schema = Joi.object({
+    title: Joi.string().trim().min(3).max(30),
+    author: Joi.string().trim().min(3).max(30),
+    description: Joi.string().trim().min(3).max(500),
+    price: Joi.number().min(0),
+    cover: Joi.string().trim().min(0).max(100),
+  });
+
+  return schema.validate(obj);
+};
+
+export { validateBook, validateUpdateBook };

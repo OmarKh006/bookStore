@@ -1,5 +1,5 @@
 import express from "express";
-import { validateBook } from "./utils/validateBook.js";
+import { validateBook, validateUpdateBook } from "./utils/validateBook.js";
 
 const router = express.Router();
 
@@ -89,6 +89,42 @@ router.post("/", (req, res) => {
   };
   books.push(book);
   res.status(201).json({ message: "book added successfully", data: book });
+});
+
+/**
+ * @description  Update a book using id
+ * @route        /api/books/:id
+ * @method       PUT
+ * @access       public
+ */
+
+router.put("/:id", (req, res) => {
+  const { error } = validateUpdateBook(req.body);
+
+  if (error) {
+    return res.status(400).json({ message: error.message });
+  }
+
+  const updatedBook = books.find((b) => b.id === parseInt(req.params.id));
+
+  if (!updatedBook) return res.status(404).json({ message: "Booknot found" });
+
+  res.status(200).json({ message: "Book has been updated successfully" });
+});
+
+/**
+ * @description  Delete a book using id
+ * @route        /api/books/:id
+ * @method       DELETE
+ * @access       public
+ */
+
+router.delete("/:id", (req, res) => {
+  const book = books.find((b) => b.id === parseInt(req.params.id));
+
+  if (!book) return res.status(404).json({ message: "Booknot found" });
+
+  res.status(200).json({ message: "Book has been deleted successfully" });
 });
 
 export default router;

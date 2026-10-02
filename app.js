@@ -3,6 +3,7 @@ import booksRouter from "./routes/books/books.route.js";
 import authorRouter from "./routes/authors/authors.route.js";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
+import { errorHandler, notFound } from "./middleware/errorHandlers.js";
 
 dotenv.config();
 
@@ -18,6 +19,10 @@ const PORT = process.env.PORT || 5000;
 
 app.use("/api/books", booksRouter);
 app.use("/api/author", authorRouter);
+
+app.use(notFound);
+
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(

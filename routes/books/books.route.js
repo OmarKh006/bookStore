@@ -15,7 +15,11 @@ const router = express.Router();
 router.get(
   "/",
   expressAsyncHandler(async (req, res) => {
-    const booksList = await Book.find();
+    const booksList = await Book.find().populate("author", [
+      "_id",
+      "firstName",
+      "lastName",
+    ]);
     res.status(200).json({ booksList });
   }),
 );
@@ -30,7 +34,7 @@ router.get(
 router.get(
   "/:id",
   expressAsyncHandler(async (req, res) => {
-    const book = await Book.findById(req.params.id);
+    const book = await Book.findById(req.params.id).populate("author");
     if (book) {
       res.status(200).json({ book });
     } else {

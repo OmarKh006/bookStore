@@ -10,7 +10,6 @@ export const validateUserRegister = (obj) => {
       .required(),
     username: Joi.string().trim().min(2).max(200).required(),
     password: Joi.string().trim().min(6).required(),
-    isAdmin: Joi.bool(),
   });
 
   return schema.validate(obj);
@@ -39,7 +38,6 @@ export const validateUserUpdate = (obj) => {
       .email({ tlds: { allow: false } }),
     username: Joi.string().trim().min(2).max(200),
     password: Joi.string().trim().min(6),
-    isAdmin: Joi.bool(),
   });
 
   return schema.validate(obj);

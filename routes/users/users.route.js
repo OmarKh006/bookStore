@@ -3,7 +3,10 @@ import expressAsyncHandler from "express-async-handler";
 import { validateUserUpdate } from "./utils/validateUser.js";
 import { User } from "../../models/user/User.model.js";
 import { hashPassword } from "../../middleware/hashPassword.js";
-import { verifyToken } from "../../middleware/verifyToken.js";
+import {
+  verifyTokenAndAdmin,
+  verifyTokenAndAuthorization,
+} from "../../middleware/verifyToken.js";
 
 const router = express.Router();
 
@@ -16,14 +19,8 @@ const router = express.Router();
 
 router.put(
   "/:id",
-  verifyToken,
+  verifyTokenAndAuthorization,
   expressAsyncHandler(async (req, res) => {
-    if (req.user.id !== req.params.id) {
-      return res
-        .status(403)
-        .json({ message: "You're not allowed to this action" });
-    }
-
     const { error } = validateUserUpdate(req.body);
     if (error) {
       return res.status(400).json({ message: error.message });
@@ -46,6 +43,22 @@ router.put(
     ).select("-password");
 
     res.status(200).json({ message: "User updated successfully" });
+  }),
+);
+
+/**
+ * @description  Get all users
+ * @route        /api/users
+ * @method       GET
+ * @access       private (only admin)
+ */
+
+router.get(
+  "/",
+  verifyTokenAndAdmin,
+  expressAsyncHandler(async (req, res) => {
+    const users = await User.find().select("-password");
+    res.status(200).json({ data: users });
   }),
 );
 

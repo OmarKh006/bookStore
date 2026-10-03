@@ -40,7 +40,6 @@ router.post(
       email: req.body.email,
       username: req.body.username,
       password: hashedPass,
-      isAdmin: req.body.isAdmin,
     });
 
     const result = await user.save();

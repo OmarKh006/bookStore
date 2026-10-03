@@ -14,3 +14,27 @@ export const verifyToken = (req, res, next) => {
     res.status(401).json({ message: "Unauthorized action" });
   }
 };
+
+export const verifyTokenAndAuthorization = (req, res, next) => {
+  verifyToken(req, res, () => {
+    if (req.user.id === req.params.id || req.user.isAdmin) {
+      next();
+    } else {
+      return res
+        .status(403)
+        .json({ message: "You're not allowed to this action" });
+    }
+  });
+};
+
+export const verifyTokenAndAdmin = (req, res, next) => {
+  verifyToken(req, res, () => {
+    if (req.user.isAdmin) {
+      next();
+    } else {
+      return res
+        .status(403)
+        .json({ message: "You're not allowed to this action" });
+    }
+  });
+};

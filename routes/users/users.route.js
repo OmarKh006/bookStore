@@ -62,4 +62,47 @@ router.get(
   }),
 );
 
+/**
+ * @description  Get user by id
+ * @route        /api/users/:id
+ * @method       GET
+ * @access       private (only admin & user himself)
+ */
+
+router.get(
+  "/:id",
+  verifyTokenAndAuthorization,
+  expressAsyncHandler(async (req, res) => {
+    const user = await User.findById(req.params.id).select("-password");
+    if (user) {
+      res.status(200).json({ data: user });
+    } else {
+      res.status(404).json({ message: "User not found" });
+    }
+  }),
+);
+
+/**
+ * @description  Delete user
+ * @route        /api/users/:id
+ * @method       DELETE
+ * @access       private (only admin & user himself)
+ */
+
+router.delete(
+  "/:id",
+  verifyTokenAndAuthorization,
+  expressAsyncHandler(async (req, res) => {
+    const user = await User.findByIdAndDelete(req.params.id).select(
+      "-password",
+    );
+    if (user) {
+      await User.findByIdAndDelete(req.params.id);
+      res.status(200).json({ message: "User deleted successfully" });
+    } else {
+      res.status(404).json({ message: "User not found" });
+    }
+  }),
+);
+
 export default router;

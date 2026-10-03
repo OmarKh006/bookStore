@@ -5,6 +5,7 @@ import {
   validateUpdateAuthor,
 } from "./utils/validateAuthor.js";
 import { Author } from "../../models/author/Author.model.js";
+import { verifyTokenAndAdmin } from "../../middleware/verifyToken.js";
 
 const router = express.Router();
 
@@ -46,11 +47,12 @@ router.get(
  * @description  Add a new author
  * @route        /api/author
  * @method       POST
- * @access       public
+ * @access       private (only admin)
  */
 
 router.post(
   "/",
+  verifyTokenAndAdmin,
   expressAsyncHandler(async (req, res) => {
     const { error } = validateAuthor(req.body);
 
@@ -75,11 +77,12 @@ router.post(
  * @description  Update author using id
  * @route        /api/author/:id
  * @method       PUT
- * @access       public
+ * @access       private (only admin)
  */
 
 router.put(
   "/:id",
+  verifyTokenAndAdmin,
   expressAsyncHandler(async (req, res) => {
     const { error } = validateUpdateAuthor(req.body);
 
@@ -109,11 +112,12 @@ router.put(
  * @description  Delete an author using id
  * @route        /api/author/:id
  * @method       DELETE
- * @access       public
+ * @access       private (only admin)
  */
 
 router.delete(
   "/:id",
+  verifyTokenAndAdmin,
   expressAsyncHandler(async (req, res) => {
     const author = await Author.findById(req.params.id);
 

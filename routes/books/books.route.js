@@ -2,6 +2,7 @@ import express from "express";
 import expressAsyncHandler from "express-async-handler";
 import { validateBook, validateUpdateBook } from "./utils/validateBook.js";
 import { Book } from "../../models/book/Book.model.js";
+import { verifyTokenAndAdmin } from "../../middleware/verifyToken.js";
 
 const router = express.Router();
 
@@ -47,11 +48,12 @@ router.get(
  * @description  Create new book
  * @route        /api/books
  * @method       POST
- * @access       public
+ * @access       private (only admin)
  */
 
 router.post(
   "/",
+  verifyTokenAndAdmin,
   expressAsyncHandler(async (req, res) => {
     const { error } = validateBook(req.body);
 
@@ -75,11 +77,12 @@ router.post(
  * @description  Update a book using id
  * @route        /api/books/:id
  * @method       PUT
- * @access       public
+ * @access       private (only admin)
  */
 
 router.put(
   "/:id",
+  verifyTokenAndAdmin,
   expressAsyncHandler(async (req, res) => {
     const { error } = validateUpdateBook(req.body);
 
@@ -111,11 +114,12 @@ router.put(
  * @description  Delete a book using id
  * @route        /api/books/:id
  * @method       DELETE
- * @access       public
+ * @access       private (only admin)
  */
 
 router.delete(
   "/:id",
+  verifyTokenAndAdmin,
   expressAsyncHandler(async (req, res) => {
     const book = await Book.findById(req.params.id);
 

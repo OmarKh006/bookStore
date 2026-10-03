@@ -9,7 +9,7 @@ import {
 import { User } from "../../models/user/User.model.js";
 import {
   comparePassword,
-  hashPassowrd,
+  hashPassword,
 } from "../../middleware/hashPassword.js";
 
 const router = express.Router();
@@ -34,7 +34,7 @@ router.post(
       return res.status(400).json({ message: "User already exists" });
     }
 
-    const hashedPass = await hashPassowrd(req.body.password);
+    const hashedPass = await hashPassword(req.body.password);
 
     user = new User({
       email: req.body.email,

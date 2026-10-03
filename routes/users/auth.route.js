@@ -1,9 +1,15 @@
 import express from "express";
 import expressAsyncHandler from "express-async-handler";
 
-import { validateUserRegister } from "./utils/validateUser.js";
+import {
+  validateUserLogin,
+  validateUserRegister,
+} from "./utils/validateUser.js";
 import { User } from "../../models/user/User.model.js";
-import { hashPassowrd } from "../../middleware/hashPassword.js";
+import {
+  comparePassword,
+  hashPassowrd,
+} from "../../middleware/hashPassword.js";
 
 const router = express.Router();
 
@@ -44,6 +50,46 @@ router.post(
     res
       .status(201)
       .json({ message: "User added successfully", data: { ...other, token } });
+  }),
+);
+
+/**
+ * @description  Login user
+ * @route        /api/auth/login
+ * @method       POST
+ * @access       public
+ */
+
+router.post(
+  "/login",
+  expressAsyncHandler(async (req, res) => {
+    const { error } = validateUserLogin(req.body);
+    if (error) {
+      return res.status(400).json({ message: error.message });
+    }
+
+    let user = await User.findOne({ email: req.body.email });
+    if (!user) {
+      return res.status(400).json({ message: "Invalid email or password" });
+    }
+
+    const checkPassword = await comparePassword(
+      req.body.password,
+      user.password,
+    );
+
+    if (!checkPassword) {
+      return res.status(400).json({ message: "Invalid email or password" });
+    }
+
+    const token = null;
+
+    const { password, ...other } = user._doc;
+
+    res.status(200).json({
+      message: "User logged in successfully",
+      data: { ...other, token },
+    });
   }),
 );
 

@@ -90,6 +90,10 @@ router.put(
       return res.status(400).json({ message: error.message });
     }
 
+    const book = await Book.findById(req.params.id);
+
+    if (!book) return res.status(404).json({ message: "Book not found" });
+
     const result = await Book.findByIdAndUpdate(
       req.params.id,
       {

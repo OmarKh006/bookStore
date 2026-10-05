@@ -26,6 +26,12 @@ router.put(
       return res.status(400).json({ message: error.message });
     }
 
+    const user = await User.findById(req.params.id);
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
     if (req.body.password) {
       req.body.password = await hashPassword(req.body.password);
     }

@@ -90,6 +90,12 @@ router.put(
       return res.status(400).json({ message: error.message });
     }
 
+    const author = await Author.findById(req.params.id);
+
+    if (!author) {
+      return res.status(404).json({ message: "Author not found" });
+    }
+
     const result = await Author.findByIdAndUpdate(
       req.params.id,
       {

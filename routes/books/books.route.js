@@ -3,6 +3,8 @@ import expressAsyncHandler from "express-async-handler";
 import { validateBook, validateUpdateBook } from "./utils/validateBook.js";
 import { Book } from "../../models/book/Book.model.js";
 import { verifyTokenAndAdmin } from "../../middleware/verifyToken.js";
+import mongoose from "mongoose";
+import { Author } from "../../models/author/Author.model.js";
 
 const router = express.Router();
 
@@ -68,6 +70,13 @@ router.post(
       price: req.body.price,
       cover: req.body.cover,
     });
+
+    if(!mongoose.isValidObjectId(book.author._id)) return res.status(400).json({message: "invalid author id"})
+    
+    const author = await Author.findById(book.author._id)
+
+    if(!author) return res.status(404).json({message: "author not found"})
+
     const result = await book.save();
     res.status(201).json({ message: "book added successfully", data: result });
   }),

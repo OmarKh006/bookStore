@@ -6,6 +6,7 @@ import {
 } from "./utils/validateAuthor.js";
 import { Author } from "../../models/author/Author.model.js";
 import { verifyTokenAndAdmin } from "../../middleware/verifyToken.js";
+import { Book } from "../../models/book/Book.model.js";
 
 const router = express.Router();
 
@@ -129,9 +130,11 @@ router.delete(
 
     if (!author) return res.status(404).json({ message: "Author not found" });
 
+    await Book.deleteMany({ author: author._id });
+
     await Author.findByIdAndDelete(req.params.id);
 
-    res.status(200).json({ message: "Author has been deleted successfully" });
+    res.status(200).json({ message: "Author and his books have been deleted successfully" });
   }),
 );
 

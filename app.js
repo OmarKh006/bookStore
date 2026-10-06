@@ -3,16 +3,13 @@ import booksRouter from "./routes/books/books.route.js";
 import authorRouter from "./routes/authors/authors.route.js";
 import authRouter from "./routes/users/auth.route.js";
 import usersRouter from "./routes/users/users.route.js";
-import mongoose from "mongoose";
 import dotenv from "dotenv";
 import { errorHandler, notFound } from "./middleware/errorHandlers.js";
+import connectToDB from "./config/connectToDB.js";
 
 dotenv.config();
 
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("Connected succuessfully to db"))
-  .catch((err) => console.log("Failed to connect to db", err));
+connectToDB();
 
 const app = express();
 app.use(express.json());

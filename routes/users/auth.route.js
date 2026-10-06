@@ -43,11 +43,7 @@ router.post(
     });
 
     const result = await user.save();
-    const token = jwt.sign(
-      { id: user._id, isAdmin: user.isAdmin },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" },
-    );
+    const token = user.generateToken();
 
     const { password, ...other } = result._doc;
 
@@ -86,11 +82,7 @@ router.post(
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
-    const token = jwt.sign(
-      { id: user._id, isAdmin: user.isAdmin },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" },
-    );
+    const token = user.generateToken();
 
     const { password, ...other } = user._doc;
 

@@ -18,12 +18,22 @@ const router = express.Router();
 router.get(
   "/",
   expressAsyncHandler(async (req, res) => {
-    const booksList = await Book.find().populate("author", [
-      "_id",
-      "firstName",
-      "lastName",
-    ]);
-    res.status(200).json({ booksList });
+    const { minPrice, maxPrice } = req.query;
+    let books;
+
+    if (minPrice && maxPrice) {
+      books = await Book.find({
+        price: { $gte: minPrice, $lte: maxPrice },
+      }).populate("author", ["_id", "firstName", "lastName"]);
+    } else {
+      books = await Book.find().populate("author", [
+        "_id",
+        "firstName",
+        "lastName",
+      ]);
+    }
+
+    res.status(200).json({ books });
   }),
 );
 
@@ -71,11 +81,12 @@ router.post(
       cover: req.body.cover,
     });
 
-    if(!mongoose.isValidObjectId(book.author._id)) return res.status(400).json({message: "invalid author id"})
-    
-    const author = await Author.findById(book.author._id)
+    if (!mongoose.isValidObjectId(book.author._id))
+      return res.status(400).json({ message: "invalid author id" });
 
-    if(!author) return res.status(404).json({message: "author not found"})
+    const author = await Author.findById(book.author._id);
+
+    if (!author) return res.status(404).json({ message: "author not found" });
 
     const result = await book.save();
     res.status(201).json({ message: "book added successfully", data: result });

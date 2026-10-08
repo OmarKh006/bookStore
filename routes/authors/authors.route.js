@@ -20,7 +20,13 @@ const router = express.Router();
 router.get(
   "/",
   expressAsyncHandler(async (req, res) => {
-    const authorsList = await Author.find();
+    const { pageNumber } = req.query;
+    const authorsPerPage = 2;
+
+    const authorsList = await Author.find()
+      .skip((pageNumber - 1) * authorsPerPage)
+      .limit(authorsPerPage);
+
     res.status(200).json({ authorsList });
   }),
 );
@@ -134,7 +140,9 @@ router.delete(
 
     await Author.findByIdAndDelete(req.params.id);
 
-    res.status(200).json({ message: "Author and his books have been deleted successfully" });
+    res
+      .status(200)
+      .json({ message: "Author and his books have been deleted successfully" });
   }),
 );
 

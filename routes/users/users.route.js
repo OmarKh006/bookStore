@@ -1,12 +1,14 @@
 import express from "express";
-import expressAsyncHandler from "express-async-handler";
-import { validateUserUpdate } from "./utils/validateUser.js";
-import { User } from "../../models/user/User.model.js";
-import { hashPassword } from "../../middleware/hashPassword.js";
 import {
   verifyTokenAndAdmin,
   verifyTokenAndAuthorization,
 } from "../../middleware/verifyToken.js";
+import {
+  deleteUser,
+  getAllUsers,
+  getUserById,
+  updateUser,
+} from "../../controllers/users/users.controller.js";
 
 const router = express.Router();
 
@@ -17,40 +19,7 @@ const router = express.Router();
  * @access       private
  */
 
-router.put(
-  "/:id",
-  verifyTokenAndAuthorization,
-  expressAsyncHandler(async (req, res) => {
-    const { error } = validateUserUpdate(req.body);
-    if (error) {
-      return res.status(400).json({ message: error.message });
-    }
-
-    const user = await User.findById(req.params.id);
-    
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    if (req.body.password) {
-      req.body.password = await hashPassword(req.body.password);
-    }
-
-    await User.findByIdAndUpdate(
-      req.params.id,
-      {
-        $set: {
-          email: req.body.email,
-          password: req.body.password,
-          username: req.body.username,
-        },
-      },
-      { new: true },
-    ).select("-password");
-
-    res.status(200).json({ message: "User updated successfully" });
-  }),
-);
+router.put("/:id", verifyTokenAndAuthorization, updateUser);
 
 /**
  * @description  Get all users
@@ -59,14 +28,7 @@ router.put(
  * @access       private (only admin)
  */
 
-router.get(
-  "/",
-  verifyTokenAndAdmin,
-  expressAsyncHandler(async (req, res) => {
-    const users = await User.find().select("-password");
-    res.status(200).json({ data: users });
-  }),
-);
+router.get("/", verifyTokenAndAdmin, getAllUsers);
 
 /**
  * @description  Get user by id
@@ -75,18 +37,7 @@ router.get(
  * @access       private (only admin & user himself)
  */
 
-router.get(
-  "/:id",
-  verifyTokenAndAuthorization,
-  expressAsyncHandler(async (req, res) => {
-    const user = await User.findById(req.params.id).select("-password");
-    if (user) {
-      res.status(200).json({ data: user });
-    } else {
-      res.status(404).json({ message: "User not found" });
-    }
-  }),
-);
+router.get("/:id", verifyTokenAndAuthorization, getUserById);
 
 /**
  * @description  Delete user
@@ -95,20 +46,6 @@ router.get(
  * @access       private (only admin & user himself)
  */
 
-router.delete(
-  "/:id",
-  verifyTokenAndAuthorization,
-  expressAsyncHandler(async (req, res) => {
-    const user = await User.findByIdAndDelete(req.params.id).select(
-      "-password",
-    );
-    if (user) {
-      await User.findByIdAndDelete(req.params.id);
-      res.status(200).json({ message: "User deleted successfully" });
-    } else {
-      res.status(404).json({ message: "User not found" });
-    }
-  }),
-);
+router.delete("/:id", verifyTokenAndAuthorization, deleteUser);
 
 export default router;

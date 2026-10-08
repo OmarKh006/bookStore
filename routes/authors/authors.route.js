@@ -1,12 +1,12 @@
 import express from "express";
-import expressAsyncHandler from "express-async-handler";
-import {
-  validateAuthor,
-  validateUpdateAuthor,
-} from "./utils/validateAuthor.js";
-import { Author } from "../../models/author/Author.model.js";
 import { verifyTokenAndAdmin } from "../../middleware/verifyToken.js";
-import { Book } from "../../models/book/Book.model.js";
+import {
+  addNewAuthor,
+  deleteAuthor,
+  getAllAuthors,
+  getAuthorsById,
+  updateAuthor,
+} from "../../controllers/authors/authors.controller.js";
 
 const router = express.Router();
 
@@ -17,19 +17,7 @@ const router = express.Router();
  * @access       public
  */
 
-router.get(
-  "/",
-  expressAsyncHandler(async (req, res) => {
-    const { pageNumber } = req.query;
-    const authorsPerPage = 2;
-
-    const authorsList = await Author.find()
-      .skip((pageNumber - 1) * authorsPerPage)
-      .limit(authorsPerPage);
-
-    res.status(200).json({ authorsList });
-  }),
-);
+router.get("/", getAllAuthors);
 
 /**
  * @description  Get author by id
@@ -38,17 +26,7 @@ router.get(
  * @access       public
  */
 
-router.get(
-  "/:id",
-  expressAsyncHandler(async (req, res) => {
-    const author = await Author.findById(req.params.id);
-    if (author) {
-      res.status(200).json({ author });
-    } else {
-      res.status(404).json({ message: "Author not found" });
-    }
-  }),
-);
+router.get("/:id", getAuthorsById);
 
 /**
  * @description  Add a new author
@@ -57,28 +35,7 @@ router.get(
  * @access       private (only admin)
  */
 
-router.post(
-  "/",
-  verifyTokenAndAdmin,
-  expressAsyncHandler(async (req, res) => {
-    const { error } = validateAuthor(req.body);
-
-    if (error) {
-      return res.status(400).json({ message: error.message });
-    }
-
-    const author = new Author({
-      firstName: req.body.firstName,
-      lastName: req.body.lastName,
-      nationality: req.body.nationality,
-      image: req.body.image,
-    });
-    const result = await author.save();
-    res
-      .status(201)
-      .json({ message: "author added successfully", data: result });
-  }),
-);
+router.post("/", verifyTokenAndAdmin, addNewAuthor);
 
 /**
  * @description  Update author using id
@@ -87,39 +44,7 @@ router.post(
  * @access       private (only admin)
  */
 
-router.put(
-  "/:id",
-  verifyTokenAndAdmin,
-  expressAsyncHandler(async (req, res) => {
-    const { error } = validateUpdateAuthor(req.body);
-
-    if (error) {
-      return res.status(400).json({ message: error.message });
-    }
-
-    const author = await Author.findById(req.params.id);
-
-    if (!author) {
-      return res.status(404).json({ message: "Author not found" });
-    }
-
-    const result = await Author.findByIdAndUpdate(
-      req.params.id,
-      {
-        $set: {
-          firstName: req.body.firstName,
-          lastName: req.body.lastName,
-          nationality: req.body.nationality,
-          image: req.body.image,
-        },
-      },
-      { new: true },
-    );
-    res
-      .status(200)
-      .json({ message: "Author updated successfully", data: result });
-  }),
-);
+router.put("/:id", verifyTokenAndAdmin, updateAuthor);
 
 /**
  * @description  Delete an author using id
@@ -128,22 +53,6 @@ router.put(
  * @access       private (only admin)
  */
 
-router.delete(
-  "/:id",
-  verifyTokenAndAdmin,
-  expressAsyncHandler(async (req, res) => {
-    const author = await Author.findById(req.params.id);
-
-    if (!author) return res.status(404).json({ message: "Author not found" });
-
-    await Book.deleteMany({ author: author._id });
-
-    await Author.findByIdAndDelete(req.params.id);
-
-    res
-      .status(200)
-      .json({ message: "Author and his books have been deleted successfully" });
-  }),
-);
+router.delete("/:id", verifyTokenAndAdmin, deleteAuthor);
 
 export default router;

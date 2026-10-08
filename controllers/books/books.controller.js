@@ -5,20 +5,27 @@ import mongoose from "mongoose";
 import expressAsyncHandler from "express-async-handler";
 
 export const getAllBooks = expressAsyncHandler(async (req, res) => {
-  const { minPrice, maxPrice } = req.query;
-  let books;
+  const { minPrice, maxPrice, pageNumber } = req.query;
+  const filter = {};
+  const booksPerPage = 2;
 
-  if (minPrice && maxPrice) {
-    books = await Book.find({
-      price: { $gte: minPrice, $lte: maxPrice },
-    }).populate("author", ["_id", "firstName", "lastName"]);
-  } else {
-    books = await Book.find().populate("author", [
-      "_id",
-      "firstName",
-      "lastName",
-    ]);
+  if (minPrice || maxPrice) {
+    filter.price = {};
+    if (minPrice) filter.price.$gte = Number(minPrice);
+    if (maxPrice) filter.price.$lte = Number(maxPrice);
   }
+
+  let query = Book.find(filter).populate("author", [
+    "_id",
+    "firstName",
+    "lastName",
+  ]);
+
+  if (pageNumber && booksPerPage) {
+    query = query.skip((pageNumber - 1) * booksPerPage).limit(booksPerPage);
+  }
+
+  const books = await query;
 
   res.status(200).json({ books });
 });

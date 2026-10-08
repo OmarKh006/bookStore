@@ -35,7 +35,14 @@ export const updateUser = expressAsyncHandler(async (req, res) => {
 });
 
 export const getAllUsers = expressAsyncHandler(async (req, res) => {
-  const users = await User.find().select("-password");
+  const { pageNumber } = req.query;
+  const usersPerPage = 2;
+
+  const users = await User.find()
+    .select("-password")
+    .skip((pageNumber - 1) * usersPerPage)
+    .limit(usersPerPage);
+
   res.status(200).json({ data: users });
 });
 

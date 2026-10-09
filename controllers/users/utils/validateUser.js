@@ -42,3 +42,11 @@ export const validateUserUpdate = (obj) => {
 
   return schema.validate(obj);
 };
+
+export const validateResetPassword = (obj) => {
+  const schema = Joi.object({
+    password: Joi.string().trim().min(6).required(),
+  });
+
+  return schema.validate(obj);
+};

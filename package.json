@@ -20,6 +20,7 @@
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "dotenv": "^18.0.5",
+    "ejs": "^7.0.1",
     "express": "^5.2.1",
     "express-async-handler": "^1.2.0",
     "joi": "^18.2.9",

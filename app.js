@@ -16,6 +16,8 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
 
+app.set("view engine", "ejs");
+
 app.use("/api/books", booksRouter);
 app.use("/api/author", authorRouter);
 app.use("/api/auth", authRouter);

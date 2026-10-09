@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  getForgotPasswordView,
   loginUser,
   registerNewUser,
 } from "../../controllers/users/auth.controller.js";
@@ -23,5 +24,14 @@ router.post("/register", registerNewUser);
  */
 
 router.post("/login", loginUser);
+
+/**
+ * @description  GET the forget password view
+ * @route        /api/auth/forgetPassword
+ * @method       GET
+ * @access       public
+ */
+
+router.route("/forgot-password").get(getForgotPasswordView);
 
 export default router;

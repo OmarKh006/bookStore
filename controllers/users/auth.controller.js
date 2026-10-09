@@ -64,3 +64,7 @@ export const loginUser = expressAsyncHandler(async (req, res) => {
     data: { ...other, token },
   });
 });
+
+export const getForgotPasswordView = expressAsyncHandler(async (req, res) => {
+  res.render("forgot-password");
+});

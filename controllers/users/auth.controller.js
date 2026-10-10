@@ -11,6 +11,7 @@ import {
 } from "./utils/validateUser.js";
 import expressAsyncHandler from "express-async-handler";
 import jwt from "jsonwebtoken";
+import { sendEmail } from "./services/sendEmail.service.js";
 
 /**
  * @description  Register new user
@@ -112,12 +113,9 @@ export const sendForgotPasswordLink = expressAsyncHandler(async (req, res) => {
 
   const link = `http://localhost:5000/api/auth/reset-password/${user._id}/${token}`;
 
-  res.json({
-    message: "Click on this link to reset the password",
-    resetLink: link,
-  });
+  sendEmail({ to: user.email, link });
 
-  //TODO: send email to user
+  res.render("link-sent");
 });
 
 /**

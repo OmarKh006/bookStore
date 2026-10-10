@@ -39,7 +39,7 @@ app.set("view engine", "ejs");
 
 // Routes
 app.use("/api/books", booksRouter);
-app.use("/api/author", authorRouter);
+app.use("/api/authors", authorRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/uploads", uploadsRouter);

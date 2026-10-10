@@ -5,6 +5,7 @@ import {
 } from "../../middleware/hashPassword.js";
 import { User } from "../../models/user/User.model.js";
 import {
+  validateForgotPassword,
   validateResetPassword,
   validateUserLogin,
   validateUserRegister,
@@ -62,7 +63,7 @@ export const loginUser = expressAsyncHandler(async (req, res) => {
     return res.status(400).json({ message: error.message });
   }
 
-  let user = await User.findOne({ email: req.body.email });
+  let user = await User.findOne({ email: req.body.email }).select("+password");
   if (!user) {
     return res.status(400).json({ message: "Invalid email or password" });
   }
@@ -102,43 +103,57 @@ export const getForgotPasswordView = expressAsyncHandler((req, res) => {
  */
 
 export const sendForgotPasswordLink = expressAsyncHandler(async (req, res) => {
-  const user = await User.findOne({ email: req.body.email });
+  const { error } = validateForgotPassword(req.body);
+  if (error) {
+    return res.status(400).json({ message: error.message });
+  }
 
-  if (!user) return res.status(404).json({ message: "user not found" });
+  const user = await User.findOne({ email: req.body.email }).select(
+    "+password",
+  );
 
-  const secret = process.env.JWT_SECRET + user.password;
-  const token = jwt.sign({ email: user.email, id: user.id }, secret, {
-    expiresIn: "15m",
-  });
+  if (user) {
+    const secret = process.env.JWT_SECRET + user.password;
+    const token = jwt.sign({ email: user.email, id: user.id }, secret, {
+      expiresIn: "15m",
+    });
+    const link = `${process.env.BASE_URL}/api/auth/reset-password/${user._id}/${token}`;
 
-  const link = `http://localhost:5000/api/auth/reset-password/${user._id}/${token}`;
-
-  await sendEmail({ to: user.email, link });
+    try {
+      await sendEmail({ to: user.email, link });
+    } catch (err) {
+      console.log(err);
+    }
+  }
 
   res.render("link-sent");
 });
 
 /**
- * @description  Get reset passowrd view
+ * @description  Get reset password view
  * @route        /api/auth/reset-password/:userId/:token
  * @method       GET
  * @access       public
  */
 
 export const getResetPasswordView = expressAsyncHandler(async (req, res) => {
-  const user = await User.findById(req.params.userId);
+  const { userId, token } = req.params;
 
-  if (!user) return res.status(404).json({ message: "user not found" });
+  const invalidLink = () =>
+    res.status(400).json({ message: "Invalid or expired reset link" });
 
-  const secret = process.env.JWT_SECRET + user.password;
+  if (!mongoose.isObjectIdOrHexString(userId)) return invalidLink();
+
+  const user = await User.findById(userId).select("+password");
+  if (!user) return invalidLink();
 
   try {
-    jwt.verify(req.params.token, secret);
-    res.render("reset-password", { email: user.email });
-  } catch (error) {
-    console.log(error);
-    res.json({ message: "error" });
+    jwt.verify(token, process.env.JWT_SECRET + user.password);
+  } catch {
+    return invalidLink();
   }
+
+  res.render("reset-password", { email: user.email });
 });
 
 /**
@@ -158,9 +173,9 @@ export const resetPassword = expressAsyncHandler(async (req, res) => {
   const invalidLink = () =>
     res.status(400).json({ message: "Invalid or expired reset link" });
 
-  if (!mongoose.isValidObjectId(userId)) return invalidLink();
+  if (!mongoose.isObjectIdOrHexString(userId)) return invalidLink();
 
-  const user = await User.findById(userId);
+  const user = await User.findById(userId).select("+password");
   if (!user) return invalidLink();
 
   try {

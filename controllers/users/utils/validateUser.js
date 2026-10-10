@@ -61,6 +61,14 @@ export const validateUserUpdate = (obj) =>
     .min(1)
     .validate(obj, options);
 
+export const validatePageQuery = (obj) =>
+  Joi.object({
+    pageNumber: Joi.number().integer().min(1).default(1),
+  }).validate(obj);
+
+export const validateForgotPassword = (obj) =>
+  Joi.object({ email: email.required() }).validate(obj, options);
+
 export const validateResetPassword = (obj) =>
   Joi.object({
     password: strongPassword.required(),

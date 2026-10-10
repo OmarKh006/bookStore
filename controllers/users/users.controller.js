@@ -1,7 +1,14 @@
 import { hashPassword } from "../../middleware/hashPassword.js";
 import { User } from "../../models/user/User.model.js";
-import { validateUserUpdate } from "./utils/validateUser.js";
+import { validatePageQuery, validateUserUpdate } from "./utils/validateUser.js";
 import expressAsyncHandler from "express-async-handler";
+
+/**
+ * @description  Update user's data
+ * @route        /api/users/:id
+ * @method       PUT
+ * @access       private
+ */
 
 export const updateUser = expressAsyncHandler(async (req, res) => {
   const { error } = validateUserUpdate(req.body);
@@ -34,8 +41,20 @@ export const updateUser = expressAsyncHandler(async (req, res) => {
   res.status(200).json({ message: "User updated successfully" });
 });
 
+/**
+ * @description  Get all users
+ * @route        /api/users
+ * @method       GET
+ * @access       private (only admin)
+ */
+
 export const getAllUsers = expressAsyncHandler(async (req, res) => {
-  const { pageNumber } = req.query;
+  const { error, value } = validatePageQuery(req.query);
+  if (error) {
+    return res.status(400).json({ message: error.message });
+  }
+
+  const { pageNumber } = value;
   const usersPerPage = 2;
 
   const users = await User.find()
@@ -46,6 +65,13 @@ export const getAllUsers = expressAsyncHandler(async (req, res) => {
   res.status(200).json({ data: users });
 });
 
+/**
+ * @description  Get user by id
+ * @route        /api/users/:id
+ * @method       GET
+ * @access       private (only admin & user himself)
+ */
+
 export const getUserById = expressAsyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id).select("-password");
   if (user) {
@@ -55,8 +81,15 @@ export const getUserById = expressAsyncHandler(async (req, res) => {
   }
 });
 
+/**
+ * @description  Delete user
+ * @route        /api/users/:id
+ * @method       DELETE
+ * @access       private (only admin & user himself)
+ */
+
 export const deleteUser = expressAsyncHandler(async (req, res) => {
-  const user = await User.findByIdAndDelete(req.params.id).select("-password");
+  const user = await User.findById(req.params.id).select("-password");
   if (user) {
     await User.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "User deleted successfully" });

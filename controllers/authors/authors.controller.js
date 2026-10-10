@@ -2,6 +2,7 @@ import expressAsyncHandler from "express-async-handler";
 import { Author } from "../../models/author/Author.model.js";
 import {
   validateAuthor,
+  validatePageQuery,
   validateUpdateAuthor,
 } from "./utils/validateAuthor.js";
 import { Book } from "../../models/book/Book.model.js";
@@ -14,7 +15,12 @@ import { Book } from "../../models/book/Book.model.js";
  */
 
 export const getAllAuthors = expressAsyncHandler(async (req, res) => {
-  const { pageNumber } = req.query;
+  const { error, value } = validatePageQuery(req.query);
+  if (error) {
+    return res.status(400).json({ message: error.message });
+  }
+
+  const { pageNumber } = value;
   const authorsPerPage = 2;
 
   const authorsList = await Author.find()

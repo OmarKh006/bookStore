@@ -1,7 +1,10 @@
 {
   "name": "bookstore",
-  "version": "1.0.0",
+  "version": "2.3.1",
   "description": "",
+  "engines": {
+    "node": ">=20.11"
+  },
   "homepage": "https://github.com/OmarKh006/bookStore#readme",
   "bugs": {
     "url": "https://github.com/OmarKh006/bookStore/issues"
@@ -15,7 +18,8 @@
   "type": "module",
   "main": "app.js",
   "scripts": {
-    "start": "nodemon app"
+    "start": "node app.js",
+    "dev": "nodemon app.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

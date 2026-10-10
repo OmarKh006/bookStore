@@ -22,4 +22,9 @@ const validateUpdateAuthor = (obj) => {
   return schema.validate(obj);
 };
 
-export { validateAuthor, validateUpdateAuthor };
+const validatePageQuery = (obj) =>
+  Joi.object({
+    pageNumber: Joi.number().integer().min(1).default(1),
+  }).validate(obj);
+
+export { validateAuthor, validateUpdateAuthor, validatePageQuery };

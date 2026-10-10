@@ -1,6 +1,10 @@
 import { Author } from "../../models/author/Author.model.js";
 import { Book } from "../../models/book/Book.model.js";
-import { validateBook, validateUpdateBook } from "./utils/validateBook.js";
+import {
+  validateBook,
+  validateFilterBooksQuery,
+  validateUpdateBook,
+} from "./utils/validateBook.js";
 import mongoose from "mongoose";
 import expressAsyncHandler from "express-async-handler";
 
@@ -12,14 +16,17 @@ import expressAsyncHandler from "express-async-handler";
  */
 
 export const getAllBooks = expressAsyncHandler(async (req, res) => {
-  const { minPrice, maxPrice, pageNumber } = req.query;
+  const { error, value } = validateFilterBooksQuery(req.query);
+  if (error) return res.status(400).json({ message: error.message });
+
+  const { minPrice, maxPrice, pageNumber } = value;
   const filter = {};
   const booksPerPage = 2;
 
-  if (minPrice || maxPrice) {
+  if (minPrice !== undefined || maxPrice !== undefined) {
     filter.price = {};
-    if (minPrice) filter.price.$gte = Number(minPrice);
-    if (maxPrice) filter.price.$lte = Number(maxPrice);
+    if (minPrice !== undefined) filter.price.$gte = minPrice;
+    if (maxPrice !== undefined) filter.price.$lte = maxPrice;
   }
 
   let query = Book.find(filter).populate("author", [
@@ -28,7 +35,7 @@ export const getAllBooks = expressAsyncHandler(async (req, res) => {
     "lastName",
   ]);
 
-  if (pageNumber && booksPerPage) {
+  if (pageNumber) {
     query = query.skip((pageNumber - 1) * booksPerPage).limit(booksPerPage);
   }
 
@@ -67,6 +74,12 @@ export const addNewBook = expressAsyncHandler(async (req, res) => {
     return res.status(400).json({ message: error.message });
   }
 
+  if (!mongoose.isObjectIdOrHexString(req.body.author))
+    return res.status(400).json({ message: "invalid author id" });
+
+  const author = await Author.findById(req.body.author);
+  if (!author) return res.status(404).json({ message: "author not found" });
+
   const book = new Book({
     title: req.body.title,
     author: req.body.author,
@@ -74,13 +87,6 @@ export const addNewBook = expressAsyncHandler(async (req, res) => {
     price: req.body.price,
     cover: req.body.cover,
   });
-
-  if (!mongoose.isValidObjectId(book.author._id))
-    return res.status(400).json({ message: "invalid author id" });
-
-  const author = await Author.findById(book.author._id);
-
-  if (!author) return res.status(404).json({ message: "author not found" });
 
   const result = await book.save();
   res.status(201).json({ message: "book added successfully", data: result });
@@ -98,6 +104,11 @@ export const updateBook = expressAsyncHandler(async (req, res) => {
 
   if (error) {
     return res.status(400).json({ message: error.message });
+  }
+
+  if (req.body.author) {
+    const author = await Author.findById(req.body.author);
+    if (!author) return res.status(404).json({ message: "author not found" });
   }
 
   const book = await Book.findById(req.params.id);

@@ -4,6 +4,7 @@ import path from "path";
 import crypto from "crypto";
 import fs from "fs/promises";
 import { fileTypeFromBuffer } from "file-type";
+import { verifyTokenAndAdmin } from "../../middleware/verifyToken.js";
 
 const __dirname = import.meta.dirname;
 const router = express.Router();
@@ -48,11 +49,9 @@ const handleUpload = (req, res, next) => {
 
     if (err instanceof multer.MulterError) {
       if (err.code === "LIMIT_FILE_SIZE") {
-        return res
-          .status(413)
-          .json({
-            error: `File too large (max ${MAX_FILE_SIZE / 1024 / 1024} MB)`,
-          });
+        return res.status(413).json({
+          error: `File too large (max ${MAX_FILE_SIZE / 1024 / 1024} MB)`,
+        });
       }
       // LIMIT_UNEXPECTED_FILE = wrong field name or too many files
       return res.status(400).json({ error: err.message });
@@ -86,24 +85,30 @@ const verifyImage = async (req, res, next) => {
   }
 };
 
-router.post("/", handleUpload, verifyImage, async (req, res, next) => {
-  try {
-    const filename = `${crypto.randomUUID()}${ALLOWED_TYPES[req.file.detectedMime]}`;
+router.post(
+  "/",
+  verifyTokenAndAdmin,
+  handleUpload,
+  verifyImage,
+  async (req, res, next) => {
+    try {
+      const filename = `${crypto.randomUUID()}${ALLOWED_TYPES[req.file.detectedMime]}`;
 
-    await fs.mkdir(UPLOAD_DIR, { recursive: true });
-    await fs.writeFile(path.join(UPLOAD_DIR, filename), req.file.buffer, {
-      flag: "wx",
-    });
+      await fs.mkdir(UPLOAD_DIR, { recursive: true });
+      await fs.writeFile(path.join(UPLOAD_DIR, filename), req.file.buffer, {
+        flag: "wx",
+      });
 
-    res.status(201).json({
-      message: "image uploaded successfully",
-      filename,
-      size: req.file.size,
-      mimetype: req.file.detectedMime,
-    });
-  } catch (err) {
-    next(err);
-  }
-});
+      res.status(201).json({
+        message: "image uploaded successfully",
+        filename,
+        size: req.file.size,
+        mimetype: req.file.detectedMime,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 export default router;

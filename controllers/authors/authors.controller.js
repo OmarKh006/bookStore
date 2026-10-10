@@ -6,6 +6,13 @@ import {
 } from "./utils/validateAuthor.js";
 import { Book } from "../../models/book/Book.model.js";
 
+/**
+ * @description  Get All Authors
+ * @route        /api/authors
+ * @method       GET
+ * @access       public
+ */
+
 export const getAllAuthors = expressAsyncHandler(async (req, res) => {
   const { pageNumber } = req.query;
   const authorsPerPage = 2;
@@ -17,6 +24,13 @@ export const getAllAuthors = expressAsyncHandler(async (req, res) => {
   res.status(200).json({ authorsList });
 });
 
+/**
+ * @description  Get author by id
+ * @route        /api/author/:id
+ * @method       GET
+ * @access       public
+ */
+
 export const getAuthorsById = expressAsyncHandler(async (req, res) => {
   const author = await Author.findById(req.params.id);
   if (author) {
@@ -25,6 +39,13 @@ export const getAuthorsById = expressAsyncHandler(async (req, res) => {
     res.status(404).json({ message: "Author not found" });
   }
 });
+
+/**
+ * @description  Add a new author
+ * @route        /api/author
+ * @method       POST
+ * @access       private (only admin)
+ */
 
 export const addNewAuthor = expressAsyncHandler(async (req, res) => {
   const { error } = validateAuthor(req.body);
@@ -42,6 +63,13 @@ export const addNewAuthor = expressAsyncHandler(async (req, res) => {
   const result = await author.save();
   res.status(201).json({ message: "author added successfully", data: result });
 });
+
+/**
+ * @description  Update author using id
+ * @route        /api/author/:id
+ * @method       PUT
+ * @access       private (only admin)
+ */
 
 export const updateAuthor = expressAsyncHandler(async (req, res) => {
   const { error } = validateUpdateAuthor(req.body);
@@ -72,6 +100,13 @@ export const updateAuthor = expressAsyncHandler(async (req, res) => {
     .status(200)
     .json({ message: "Author updated successfully", data: result });
 });
+
+/**
+ * @description  Delete an author using id
+ * @route        /api/author/:id
+ * @method       DELETE
+ * @access       private (only admin)
+ */
 
 export const deleteAuthor = expressAsyncHandler(async (req, res) => {
   const author = await Author.findById(req.params.id);

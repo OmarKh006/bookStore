@@ -4,6 +4,13 @@ import { validateBook, validateUpdateBook } from "./utils/validateBook.js";
 import mongoose from "mongoose";
 import expressAsyncHandler from "express-async-handler";
 
+/**
+ * @description  Get All Books
+ * @route        /api/books
+ * @method       GET
+ * @access       public
+ */
+
 export const getAllBooks = expressAsyncHandler(async (req, res) => {
   const { minPrice, maxPrice, pageNumber } = req.query;
   const filter = {};
@@ -30,6 +37,13 @@ export const getAllBooks = expressAsyncHandler(async (req, res) => {
   res.status(200).json({ books });
 });
 
+/**
+ * @description  Get book by id
+ * @route        /api/books/:id
+ * @method       GET
+ * @access       public
+ */
+
 export const getBookById = expressAsyncHandler(async (req, res) => {
   const book = await Book.findById(req.params.id).populate("author");
   if (book) {
@@ -38,6 +52,13 @@ export const getBookById = expressAsyncHandler(async (req, res) => {
     res.status(404).json({ message: "Book not found" });
   }
 });
+
+/**
+ * @description  Create new book
+ * @route        /api/books
+ * @method       POST
+ * @access       private (only admin)
+ */
 
 export const addNewBook = expressAsyncHandler(async (req, res) => {
   const { error } = validateBook(req.body);
@@ -64,6 +85,13 @@ export const addNewBook = expressAsyncHandler(async (req, res) => {
   const result = await book.save();
   res.status(201).json({ message: "book added successfully", data: result });
 });
+
+/**
+ * @description  Update a book using id
+ * @route        /api/books/:id
+ * @method       PUT
+ * @access       private (only admin)
+ */
 
 export const updateBook = expressAsyncHandler(async (req, res) => {
   const { error } = validateUpdateBook(req.body);
@@ -92,6 +120,13 @@ export const updateBook = expressAsyncHandler(async (req, res) => {
 
   res.status(200).json({ message: "Book updated successfully", data: result });
 });
+
+/**
+ * @description  Delete a book using id
+ * @route        /api/books/:id
+ * @method       DELETE
+ * @access       private (only admin)
+ */
 
 export const deleteBook = expressAsyncHandler(async (req, res) => {
   const book = await Book.findById(req.params.id);

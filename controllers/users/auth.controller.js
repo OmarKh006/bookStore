@@ -113,7 +113,7 @@ export const sendForgotPasswordLink = expressAsyncHandler(async (req, res) => {
 
   const link = `http://localhost:5000/api/auth/reset-password/${user._id}/${token}`;
 
-  sendEmail({ to: user.email, link });
+  await sendEmail({ to: user.email, link });
 
   res.render("link-sent");
 });

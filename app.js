@@ -43,7 +43,14 @@ app.use(
     crossOriginResourcePolicy: { policy: "cross-origin" },
   }),
 );
-app.use(cors());
+const ORIGINS = (process.env.CORS_ORIGINS || "http://localhost:3000").split(
+  ",",
+);
+app.use(
+  cors({
+    origin: ORIGINS,
+  }),
+);
 
 // Body parsers
 app.use(express.json());

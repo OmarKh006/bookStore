@@ -22,9 +22,12 @@ const validateUpdateAuthor = (obj) => {
   return schema.validate(obj);
 };
 
-const validatePageQuery = (obj) =>
-  Joi.object({
+const validatePageQuery = (obj) => {
+  const schema = Joi.object({
     pageNumber: Joi.number().integer().min(1).default(1),
-  }).validate(obj);
+    limit: Joi.number().integer().min(1).max(50).default(12),
+  });
+  return schema.validate(obj);
+};
 
 export { validateAuthor, validateUpdateAuthor, validatePageQuery };

@@ -19,9 +19,8 @@ export const getAllBooks = expressAsyncHandler(async (req, res) => {
   const { error, value } = validateFilterBooksQuery(req.query);
   if (error) return res.status(400).json({ message: error.message });
 
-  const { minPrice, maxPrice, pageNumber } = value;
+  const { minPrice, maxPrice, pageNumber, limit } = value;
   const filter = {};
-  const booksPerPage = 2;
 
   if (minPrice !== undefined || maxPrice !== undefined) {
     filter.price = {};
@@ -29,19 +28,18 @@ export const getAllBooks = expressAsyncHandler(async (req, res) => {
     if (maxPrice !== undefined) filter.price.$lte = maxPrice;
   }
 
-  let query = Book.find(filter).populate("author", [
-    "_id",
-    "firstName",
-    "lastName",
+  const [books, total] = await Promise.all([
+    Book.find(filter)
+      .populate("author", ["_id", "firstName", "lastName"])
+      .sort({ createdAt: -1, _id: 1 })
+      .skip((pageNumber - 1) * limit)
+      .limit(limit),
+    Book.countDocuments(filter),
   ]);
 
-  if (pageNumber) {
-    query = query.skip((pageNumber - 1) * booksPerPage).limit(booksPerPage);
-  }
+  const pages = Math.ceil(total / limit);
 
-  const books = await query;
-
-  res.status(200).json({ books });
+  res.status(200).json({ books, total, pages, pageNumber, limit });
 });
 
 /**

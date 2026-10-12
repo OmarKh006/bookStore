@@ -54,15 +54,19 @@ export const getAllUsers = expressAsyncHandler(async (req, res) => {
     return res.status(400).json({ message: error.message });
   }
 
-  const { pageNumber } = value;
-  const usersPerPage = 2;
+  const { pageNumber, limit } = value;
 
-  const users = await User.find()
-    .select("-password")
-    .skip((pageNumber - 1) * usersPerPage)
-    .limit(usersPerPage);
+  const [users, total] = await Promise.all([
+    User.find()
+      .sort({ createdAt: -1, _id: 1 })
+      .skip((pageNumber - 1) * limit)
+      .limit(limit),
+    User.countDocuments(),
+  ]);
 
-  res.status(200).json({ data: users });
+  const pages = Math.ceil(total / limit);
+
+  res.status(200).json({ data: users, total, pages, pageNumber, limit });
 });
 
 /**

@@ -20,14 +20,19 @@ export const getAllAuthors = expressAsyncHandler(async (req, res) => {
     return res.status(400).json({ message: error.message });
   }
 
-  const { pageNumber } = value;
-  const authorsPerPage = 2;
+  const { pageNumber, limit } = value;
 
-  const authorsList = await Author.find()
-    .skip((pageNumber - 1) * authorsPerPage)
-    .limit(authorsPerPage);
+  const [authorsList, total] = await Promise.all([
+    Author.find()
+      .sort({ createdAt: -1, _id: 1 })
+      .skip((pageNumber - 1) * limit)
+      .limit(limit),
+    Author.countDocuments(),
+  ]);
 
-  res.status(200).json({ authorsList });
+  const pages = Math.ceil(total / limit);
+
+  res.status(200).json({ authorsList, total, pages, pageNumber, limit });
 });
 
 /**

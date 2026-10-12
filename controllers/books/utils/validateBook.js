@@ -33,7 +33,8 @@ const validateFilterBooksQuery = (obj) => {
         is: Joi.exist(),
         then: Joi.number().min(Joi.ref("minPrice")),
       }),
-    pageNumber: Joi.number().integer().min(1),
+    pageNumber: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(50).default(12),
   });
 
   return schema.validate(obj);

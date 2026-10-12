@@ -10,8 +10,23 @@ import usersRouter from "./routes/users/users.route.js";
 import uploadsRouter from "./routes/uploads/uploads.route.js";
 import { errorHandler, notFound } from "./middleware/errorHandlers.js";
 import connectToDB from "./config/connectToDB.js";
+import mongoose from "mongoose";
 
 dotenv.config();
+
+const REQUIRED_VARS = ["MONGO_URI", "BASE_URL", "JWT_SECRET"];
+const missing = [];
+
+for (let i = 0; i < REQUIRED_VARS.length; i++) {
+  if (!process.env[REQUIRED_VARS[i]]) {
+    missing.push(REQUIRED_VARS[i]);
+  }
+}
+
+if (missing.length > 0) {
+  console.error("missing variables : ", missing.join(", "));
+  process.exit(1);
+}
 
 connectToDB();
 
@@ -46,12 +61,18 @@ app.use("/api/auth", authRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/uploads", uploadsRouter);
 
+app.get("/healthcheck", (_req, res) => {
+  if (mongoose.connection.readyState === 1)
+    return res.status(200).json({ status: "ok" });
+  res.status(503).json({ status: "error" });
+});
+
 // Error handling
 app.use(notFound);
 app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(
-    `Server running in ${process.env.NODE_ENV} mode at http://localhost:${PORT}`,
+    `Server running in ${process.env.NODE_ENV || "development"} mode at http://localhost:${PORT}`,
   );
 });

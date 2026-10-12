@@ -7,21 +7,22 @@ import {
   resetPassword,
   sendForgotPasswordLink,
 } from "../../controllers/users/auth.controller.js";
+import { limiter } from "../../middleware/rateLimiter.js";
 
 const router = express.Router();
 
-router.post("/register", registerNewUser);
+router.post("/register", limiter, registerNewUser);
 
-router.post("/login", loginUser);
+router.post("/login", limiter, loginUser);
 
 router
   .route("/forgot-password")
   .get(getForgotPasswordView)
-  .post(sendForgotPasswordLink);
+  .post(limiter, sendForgotPasswordLink);
 
 router
   .route("/reset-password/:userId/:token")
   .get(getResetPasswordView)
-  .post(resetPassword);
+  .post(limiter, resetPassword);
 
 export default router;

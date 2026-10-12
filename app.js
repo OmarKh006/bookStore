@@ -17,6 +17,8 @@ connectToDB();
 
 const app = express();
 
+app.set("trust proxy", 1);
+
 const __dirname = import.meta.dirname;
 const PORT = process.env.PORT || 5000;
 

@@ -13,6 +13,7 @@ const bookSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       required: true,
       ref: "Author",
+      index: true,
     },
     description: {
       type: String,
@@ -24,6 +25,7 @@ const bookSchema = new mongoose.Schema(
       type: Number,
       required: true,
       min: 0,
+      index: true,
     },
     cover: {
       type: String,

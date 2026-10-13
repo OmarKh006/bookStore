@@ -1,45 +1,123 @@
 export const books = [
   {
-    title: "Black Swan",
-    author: "6ac73c5a9c7f5aea5b0cace5",
-    description: "About Black Swan",
-    price: 10,
+    title: "Rich Dad Poor Dad",
+    authorName: "Robert Kiyosaki",
+    description: "Discover lessons about money and financial independence.",
+    price: 15,
     cover: "soft cover",
   },
   {
-    title: "Skin In The Game",
-    author: "6ac73c5a9c7f5aea5b0cace5",
-    description: "About Skin In The Game",
-    price: 12,
-    cover: "soft cover",
-  },
-  {
-    title: "Fooled By Randomness",
-    author: "6ac73c5a9c7f5aea5b0cace5",
-    description: "About Fooled By Randomness",
-    price: 8,
+    title: "The Alchemist",
+    authorName: "Paulo Coelho",
+    description: "A young shepherd follows his dreams across the desert.",
+    price: 11,
     cover: "hard cover",
   },
   {
-    title: "The Forty Rules Of Loves",
-    author: "6ac73c739c7f5aea5b0cace6",
-    description: "About The Forty Rules Of Loves",
-    price: 14,
+    title: "Veronika Decides to Die",
+    authorName: "Paulo Coelho",
+    description: "A young woman discovers new reasons to embrace life.",
+    price: 13,
     cover: "soft cover",
   },
   {
-    title: "The Island Of Missing Trees",
-    author: "6ac73c739c7f5aea5b0cace6",
-    description: "About The Island Of Missing Trees",
+    title: "Brida",
+    authorName: "Paulo Coelho",
+    description:
+      "A young woman explores spirituality, love, and self-discovery.",
+    price: 14,
+    cover: "hard cover",
+  },
+  {
+    title: "The Power of Intention",
+    authorName: "Wayne Dyer",
+    description:
+      "Learn how intention can influence personal growth and fulfillment.",
+    price: 16,
+    cover: "soft cover",
+  },
+  {
+    title: "Your Erroneous Zones",
+    authorName: "Wayne Dyer",
+    description:
+      "A guide to overcoming negative thinking and self-limiting behavior.",
+    price: 12,
+    cover: "hard cover",
+  },
+  {
+    title: "The Sky's the Limit",
+    authorName: "Wayne Dyer",
+    description:
+      "Explore ways to develop confidence and achieve personal goals.",
+    price: 18,
+    cover: "soft cover",
+  },
+  {
+    title: "The Art of Thinking Clearly",
+    authorName: "Rolf Dobelli",
+    description:
+      "Understand common cognitive errors and improve decision-making.",
+    price: 17,
+    cover: "soft cover",
+  },
+  {
+    title: "The Art of the Good Life",
+    authorName: "Rolf Dobelli",
+    description: "Practical ideas for making better decisions and living well.",
+    price: 20,
+    cover: "hard cover",
+  },
+  {
+    title: "Stop Reading the News",
+    authorName: "Rolf Dobelli",
+    description: "Examine how constant news consumption affects your thinking.",
+    price: 15,
+    cover: "soft cover",
+  },
+  {
+    title: "Murder on the Orient Express",
+    authorName: "Agatha Christie",
+    description:
+      "Detective Hercule Poirot investigates a murder aboard a train.",
+    price: 14,
+    cover: "hard cover",
+  },
+  {
+    title: "Death on the Nile",
+    authorName: "Agatha Christie",
+    description: "A vacation cruise becomes the scene of a mysterious murder.",
+    price: 16,
+    cover: "soft cover",
+  },
+  {
+    title: "And Then There Were None",
+    authorName: "Agatha Christie",
+    description: "Ten strangers face a deadly mystery on an isolated island.",
+    price: 18,
+    cover: "hard cover",
+  },
+  {
+    title: "War and Peace",
+    authorName: "Leo Tolstoy",
+    description:
+      "An epic novel exploring love, family, and society during war.",
+    price: 28,
+    cover: "hard cover",
+  },
+  {
+    title: "Anna Karenina",
+    authorName: "Leo Tolstoy",
+    description:
+      "A classic novel about love, marriage, and social expectations.",
+    price: 24,
+    cover: "soft cover",
+  },
+  {
+    title: "The Death of Ivan Ilyich",
+    authorName: "Leo Tolstoy",
+    description: "A novella examining mortality and the meaning of life.",
     price: 9,
     cover: "soft cover",
-  },
-  {
-    title: "The Flea Palace",
-    author: "6ac73c739c7f5aea5b0cace6",
-    description: "About The Flea Palace",
-    price: 10,
-    cover: "hard cover",
   },
 ];
 
@@ -63,5 +141,15 @@ export const authors = [
     firstName: "Rolf",
     lastName: "Dobelli",
     nationality: "Switzerland",
+  },
+  {
+    firstName: "Agatha",
+    lastName: "Christie",
+    nationality: "British",
+  },
+  {
+    firstName: "Leo",
+    lastName: "Tolstoy",
+    nationality: "Russian",
   },
 ];

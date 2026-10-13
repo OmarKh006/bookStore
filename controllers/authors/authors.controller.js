@@ -37,7 +37,7 @@ export const getAllAuthors = expressAsyncHandler(async (req, res) => {
 
 /**
  * @description  Get author by id
- * @route        /api/author/:id
+ * @route        /api/authors/:id
  * @method       GET
  * @access       public
  */
@@ -53,7 +53,7 @@ export const getAuthorsById = expressAsyncHandler(async (req, res) => {
 
 /**
  * @description  Add a new author
- * @route        /api/author
+ * @route        /api/authors
  * @method       POST
  * @access       private (only admin)
  */
@@ -77,7 +77,7 @@ export const addNewAuthor = expressAsyncHandler(async (req, res) => {
 
 /**
  * @description  Update author using id
- * @route        /api/author/:id
+ * @route        /api/authors/:id
  * @method       PUT
  * @access       private (only admin)
  */
@@ -114,7 +114,7 @@ export const updateAuthor = expressAsyncHandler(async (req, res) => {
 
 /**
  * @description  Delete an author using id
- * @route        /api/author/:id
+ * @route        /api/authors/:id
  * @method       DELETE
  * @access       private (only admin)
  */

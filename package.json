@@ -1,25 +1,27 @@
 {
   "name": "bookstore",
-  "version": "2.4.0",
-  "description": "",
-  "engines": {
-    "node": ">=20.11"
-  },
+  "version": "3.0.0",
+  "description": "BookStore REST API (TypeScript / Node.js / Express / MongoDB)",
+  "engines": { "node": ">=20.11" },
   "homepage": "https://github.com/OmarKh006/bookStore#readme",
-  "bugs": {
-    "url": "https://github.com/OmarKh006/bookStore/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/OmarKh006/bookStore.git"
-  },
+  "bugs": { "url": "https://github.com/OmarKh006/bookStore/issues" },
+  "repository": { "type": "git", "url": "git+https://github.com/OmarKh006/bookStore.git" },
   "license": "ISC",
   "author": "Omar Khairy",
   "type": "module",
-  "main": "app.js",
+  "main": "dist/server.js",
   "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon app.js"
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/server.js",
+    "dev": "tsx watch src/server.ts",
+    "typecheck": "tsc --noEmit",
+    "seed:import": "tsx src/seeder.ts -import",
+    "seed:delete": "tsx src/seeder.ts -delete",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -38,6 +40,18 @@
     "nodemailer": "^10.0.16"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.0",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^22.0.0",
+    "@types/nodemailer": "^7.0.0",
+    "@types/supertest": "^6.0.3",
+    "@vitest/coverage-v8": "^3.2.4",
+    "mongodb-memory-server": "^10.2.0",
+    "supertest": "^7.1.4",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.4"
   }
 }

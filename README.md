@@ -1,14 +1,16 @@
 # BookStore API
 
-![Version](https://img.shields.io/badge/version-2.4.0-blue)
+![Version](https://img.shields.io/badge/version-3.0.0-blue)
+![TypeScript](https://img.shields.io/badge/typescript-5.9-3178C6?logo=typescript&logoColor=white)
 ![Node](https://img.shields.io/badge/node-%3E%3D20.11-339933?logo=node.js&logoColor=white)
 ![Express](https://img.shields.io/badge/express-5-000000?logo=express)
 ![MongoDB](https://img.shields.io/badge/mongodb-mongoose%209-47A248?logo=mongodb&logoColor=white)
+![Tests](https://img.shields.io/badge/tests-vitest%20%2B%20supertest-6E9F18?logo=vitest&logoColor=white)
 ![License](https://img.shields.io/badge/license-ISC-lightgrey)
 
-REST API for an online book store. It serves a public catalog of books and authors, handles user accounts with JWT authentication and email-based password reset, accepts verified image uploads, and restricts catalog management to administrators.
+REST API for an online book store, written in **TypeScript**. It serves a public catalog of books and authors, handles user accounts with JWT authentication and email-based password reset, accepts verified image uploads, and restricts catalog management to administrators.
 
-**Status:** deployed on Render with MongoDB Atlas. Authentication, validation, pagination, rate limiting, restricted CORS, startup configuration checks and a health endpoint are in place. Automated tests, graceful shutdown, request logging and persistent upload storage are still open; see the [Production Readiness Checklist](#production-readiness-checklist).
+**Status:** deployed on Render with MongoDB Atlas. Authentication, validation, pagination, rate limiting, restricted CORS, startup configuration checks, a health endpoint and an automated unit and integration test suite are in place. CI, graceful shutdown, request logging and persistent upload storage are still open; see the [Production Readiness Checklist](#production-readiness-checklist).
 
 ## Live Deployment
 
@@ -39,6 +41,7 @@ REST API for an online book store. It serves a public catalog of books and autho
 - [Health Check](#health-check)
 - [Error Handling](#error-handling)
 - [Security](#security)
+- [Testing](#testing)
 - [Deployment](#deployment)
 - [Production Readiness Checklist](#production-readiness-checklist)
 - [Troubleshooting](#troubleshooting)
@@ -52,7 +55,7 @@ REST API for an online book store. It serves a public catalog of books and autho
 - **Catalog:** full CRUD for books and authors, with the author embedded in book responses.
 - **Accounts:** registration, login, and profile management with owner-or-admin access.
 - **Authentication:** stateless JWT (1-day expiry) and bcrypt password hashing.
-- **Password reset:** emailed, 15-minute, single-purpose links; the response never reveals whether an account exists.
+- **Password reset:** emailed, 15-minute links bound to the current password; the response never reveals whether an account exists.
 - **Uploads:** admin-only image upload verified by size, extension, declared MIME type and real file content.
 - **Pagination:** every list endpoint is paginated with a configurable `limit`, a stable sort and totals in the response.
 - **Filtering:** price-range filtering on books.
@@ -60,6 +63,8 @@ REST API for an online book store. It serves a public catalog of books and autho
 - **Abuse protection:** per-IP rate limiting on registration, login and password-reset endpoints.
 - **Error handling:** one central handler that maps Mongoose and body-parser errors to the right HTTP status and hides internals in production.
 - **Security headers and CORS:** `helmet` and an allow-list based `cors` configuration.
+- **Type safety:** strict TypeScript (`strict`, `noUncheckedIndexedAccess`), checked on every build and by `npm run typecheck`.
+- **Tested:** unit tests for pure logic and integration tests that exercise the real Express app against a throw-away in-memory MongoDB.
 - **Operations:** fail-fast environment validation at startup, a database-aware health endpoint, and an idempotent, guarded database seeder.
 
 ## Architecture
@@ -96,46 +101,55 @@ flowchart LR
 
 Routes only declare paths and middleware. Controllers hold the logic and each resource keeps its Joi schemas next to its controller. Controllers are wrapped in `express-async-handler`, so any thrown or rejected error ends up in `errorHandler`.
 
+`createApp()` in `src/app.ts` builds the Express app **without** connecting to a database or listening on a port. `src/server.ts` is the only file that does I/O at startup (env check, DB connection, `listen`). That split is what lets the tests import the app directly.
+
 ### Project structure
 
 ```
 bookStore/
-├── app.js                          App setup: env check, middleware, routes, health route, error handlers, server start
-├── seeder.js, data.js              Guarded database seeder and its sample data
-├── .env.example                    Template for environment variables
-├── config/
-│   └── connectToDB.js              MongoDB connection (exits the process on failure)
-├── controllers/
-│   ├── authors/
-│   │   ├── authors.controller.js
-│   │   └── utils/validateAuthor.js
-│   ├── books/
-│   │   ├── books.controller.js
-│   │   └── utils/validateBook.js
-│   └── users/
-│       ├── auth.controller.js      Register, login, forgot/reset password
-│       ├── users.controller.js     List, get, update and delete users
-│       ├── services/sendEmail.service.js   Nodemailer transport and reset email
-│       └── utils/validateUser.js
-├── middleware/
-│   ├── errorHandlers.js            notFound and the central errorHandler
-│   ├── hashPassword.js             bcrypt hash and compare helpers
-│   ├── rateLimiter.js              Per-IP rate limiter for auth routes
-│   ├── validateObjectId.js         Rejects malformed :id params with 400
-│   └── verifyToken.js              JWT checks: any user, owner-or-admin, admin only
-├── models/                         Author, Book and User Mongoose models
-├── routes/
-│   ├── authors/, books/            CRUD routes
-│   ├── users/                      auth.route.js and users.route.js
-│   └── uploads/uploads.route.js    Image upload pipeline
+├── src/
+│   ├── server.ts                   Entry point: env check, DB connection, listen
+│   ├── app.ts                      createApp(): middleware, routes, health route, error handlers
+│   ├── seeder.ts, data.ts          Guarded database seeder and its sample data
+│   ├── config/
+│   │   ├── connectToDB.ts          MongoDB connection (exits the process on failure)
+│   │   └── env.ts                  Required-variable check
+│   ├── controllers/
+│   │   ├── authors/                authors.controller.ts, utils/validateAuthor.ts
+│   │   ├── books/                  books.controller.ts, utils/validateBook.ts
+│   │   └── users/
+│   │       ├── auth.controller.ts  Register, login, forgot/reset password
+│   │       ├── users.controller.ts List, get, update and delete users
+│   │       ├── services/sendEmail.service.ts   Nodemailer transport and reset email
+│   │       └── utils/validateUser.ts
+│   ├── middleware/
+│   │   ├── errorHandlers.ts        notFound and the central errorHandler
+│   │   ├── hashPassword.ts         bcrypt hash and compare helpers
+│   │   ├── rateLimiter.ts          Per-IP rate limiter factory for auth routes
+│   │   ├── validateObjectId.ts     Rejects malformed :id params with 400
+│   │   └── verifyToken.ts          JWT checks: any user, owner-or-admin, admin only
+│   ├── models/                     Author, Book and User Mongoose models
+│   ├── routes/                     auth, authors, books, users and uploads routers
+│   └── types/                      Shared types and the Express Request augmentation
+├── tests/
+│   ├── unit/                       Pure logic, no database
+│   ├── integration/                Supertest against the real app + in-memory MongoDB
+│   └── helpers/                    DB bootstrap, factories, env setup, fixtures
 ├── views/                          EJS pages for the password reset flow
-└── images/                         Uploaded images (git-ignored), served as static files
+├── images/                         Uploaded images (git-ignored except default.png)
+├── dist/                           Compiled output of `npm run build` (git-ignored)
+├── tsconfig.json                   Editor and type-check config (src + tests)
+├── tsconfig.build.json             Build config (src only, emits dist/ with source maps)
+├── vitest.config.ts                Test and coverage configuration
+├── TESTING.md                      Detailed testing guide
+└── .env.example                    Template for environment variables
 ```
 
 ## Tech Stack
 
 | Area            | Packages                                                           |
 | --------------- | ------------------------------------------------------------------ |
+| Language        | TypeScript 5.9 (`strict`), compiled with `tsc`, run in dev with `tsx` |
 | Runtime         | Node.js **20.11+** (ES Modules, `import.meta.dirname`)             |
 | Web framework   | Express 5, `express-async-handler`                                 |
 | Database        | MongoDB (Atlas in production), Mongoose 9                          |
@@ -143,7 +157,8 @@ bookStore/
 | Validation      | Joi 18                                                             |
 | Uploads         | `multer` (memory storage), `file-type`                             |
 | Email & views   | `nodemailer`, `ejs`                                                |
-| Config & dev    | `dotenv`, `nodemon`                                                |
+| Testing         | Vitest, Supertest, `mongodb-memory-server`, `@vitest/coverage-v8`  |
+| Config          | `dotenv`                                                           |
 
 ## Getting Started
 
@@ -160,9 +175,13 @@ git clone https://github.com/OmarKh006/bookStore.git
 cd bookStore
 npm install
 cp .env.example .env        # then fill in the values, see Configuration
-npm run dev                 # nodemon, restarts on changes
-# or
-npm start                   # plain "node app.js"
+
+# development: runs the TypeScript sources directly and restarts on changes
+npm run dev
+
+# production-style: compile to dist/ and run the compiled output
+npm run build
+npm start
 ```
 
 The API listens on `http://localhost:5000` unless `PORT` is set. The process **exits immediately** if a required environment variable is missing or if it can't connect to MongoDB.
@@ -172,8 +191,8 @@ The API listens on `http://localhost:5000` unless `PORT` is set. The process **e
 ### Seed sample data
 
 ```bash
-node seeder -import    # wipe books and authors, then insert 6 authors and 16 books
-node seeder -delete    # wipe books and authors
+npm run seed:import    # wipe books and authors, then insert 6 authors and 16 books
+npm run seed:delete    # wipe books and authors
 ```
 
 The seeder is safe to run repeatedly and links every book to the correct author by name. It is guarded: it refuses to run unless the connected database name equals `SEED_DB_NAME`, so a wrong `MONGO_URI` can't wipe another database. It never touches users. See [Seeding the database](#seeding-the-database) for details.
@@ -215,7 +234,7 @@ curl "$BASE/api/books?minPrice=8&maxPrice=20&pageNumber=2&limit=5"
 
 ## Configuration
 
-All settings are environment variables, loaded from `.env` by `dotenv`. Copy `.env.example` as a starting point and never commit `.env`.
+All settings are environment variables, loaded from `.env` by `dotenv`. Copy `.env.example` as a starting point and never commit `.env`. The test suite sets its own values and needs no `.env`.
 
 | Variable       | Required                     | Description                                                                                                 |
 | -------------- | ---------------------------- | ----------------------------------------------------------------------------------------------------------- |
@@ -223,8 +242,9 @@ All settings are environment variables, loaded from `.env` by `dotenv`. Copy `.e
 | `JWT_SECRET`   | **yes** (checked at startup) | Secret used to sign login tokens and as part of the password-reset token secret. Use 32+ random bytes.      |
 | `BASE_URL`     | **yes** (checked at startup) | Public base URL of this API, used to build reset links, e.g. `https://api.example.com` (no trailing slash). |
 | `PORT`         | no                           | Port to listen on. Default `5000`. Hosting platforms usually inject this.                                   |
-| `NODE_ENV`     | recommended                  | Set to `production` in production. It hides internal error messages on 5xx responses.                       |
+| `NODE_ENV`     | recommended                  | Set to `production` in production. It hides internal error messages on 5xx responses.                      |
 | `CORS_ORIGINS` | recommended                  | Comma-separated list of allowed browser origins, no trailing slashes. Default `http://localhost:3000`.      |
+| `UPLOAD_DIR`   | no                           | Directory where uploaded images are written. Default `./images`. See the note under [Image Uploads](#image-uploads). |
 | `SEED_DB_NAME` | for the seeder only          | The only database name the seeder is allowed to modify. Not needed in production.                           |
 | `SMTP_HOST`    | for reset emails             | SMTP server host.                                                                                           |
 | `SMTP_PORT`    | for reset emails             | SMTP server port (`587`, `465`, ...).                                                                       |
@@ -555,7 +575,7 @@ Checks, in order:
 1. At most one file, up to **5 MB** (`413` otherwise).
 2. The extension and the declared MIME type must be JPEG, PNG, WebP or GIF (`415` otherwise).
 3. The real file content is inspected (magic bytes) and must be one of those image types (`415` otherwise).
-4. The file is written to `images/` under a random UUID name. The client's filename is never used.
+4. The file is written to the upload directory under a random UUID name. The client's filename is never used.
 
 Invalid files never touch the disk because the upload is held in memory until it is verified.
 
@@ -574,12 +594,14 @@ Upload errors use `{ "error": "..." }`: `400` no file or wrong field name, `413`
 
 Files in `images/` are served statically at the **root** of the server, for example `http://localhost:5000/e93f2f9f-5a9b-4373-b1d7-e7fe08048274.png`, and are public. Send the returned `filename` as an author's `image` to attach it. `helmet` is configured with `Cross-Origin-Resource-Policy: cross-origin`, so a separate front-end origin can display these images.
 
+> **`UPLOAD_DIR` caveat:** uploads are written to `UPLOAD_DIR` (default `./images`), but the static file server only serves the project's `images/` folder. If you set `UPLOAD_DIR` to another location, uploaded files are saved but not served by this API. The tests use this setting to keep your real `images/` untouched.
+
 > **Production note:** images are stored on the local disk. On platforms with an ephemeral filesystem, uploads are lost on every redeploy or restart. Mount a persistent volume at `images/` or move to object storage before relying on uploads in production.
 
 ## Password Reset Flow
 
 1. The user opens `GET /api/auth/forgot-password` and submits their email.
-2. The email is validated. For a registered account the server signs a token that lasts **15 minutes**, using `JWT_SECRET` combined with the user's current password hash. The token therefore stops working as soon as the password changes, and a login token can't be used as a reset token.
+2. The email is validated. For a registered account the server signs a token that lasts **15 minutes**, using `JWT_SECRET` combined with the user's current password hash. The token therefore stops working as soon as the password changes (so a link is effectively single-use), and a login token can't be used as a reset token.
 3. A link `<BASE_URL>/api/auth/reset-password/<userId>/<token>` is emailed through the configured SMTP server. If sending fails, the error is logged and the user still sees the same page.
 4. The user opens the link and submits a new password that meets the [password rules](#validation-rules).
 5. The password is hashed and saved, and a success page asks the user to log in again.
@@ -608,9 +630,10 @@ The following routes are limited per client IP:
 
 Details worth knowing:
 
-- Every request counts toward the limit, successful or not.
+- Every request counts toward the limit, successful or not. Because the counter is shared, repeated login attempts also use up the budget for requesting a password reset.
 - Counters are kept **in memory** in the Node process, so they reset on restart or redeploy and are not shared between instances. Running several instances would require a shared store such as Redis.
-- `trust proxy` is set to `1`, so the real client IP is read from the platform's proxy. If you deploy behind a different number of proxies, adjust this value, otherwise all users may share one counter.
+- `trust proxy` is set to `1`, so the real client IP is read from the platform's proxy. If you deploy behind a different number of proxies, adjust this value in `src/app.ts`, otherwise all users may share one counter.
+- `createApp({ rateLimitMax })` lets tests (or other callers) override the limit; the default of 10 is what production uses.
 - Public catalog reads are not rate limited.
 
 ## CORS
@@ -682,12 +705,42 @@ Errors with a status of 500 or above are always logged with `console.error`. Exp
 - Secrets and credentials are read from environment variables only, and `.env` is git-ignored.
 - The seeder refuses to run against any database other than `SEED_DB_NAME`.
 - The app refuses to start without `MONGO_URI`, `JWT_SECRET` and `BASE_URL`.
+- Privilege-escalation, injection-style and fake-upload cases are covered by automated tests (see [Testing](#testing)).
 
 **Not yet in place** (tracked in the [checklist](#production-readiness-checklist))
 
 - A shared rate-limit store for multi-instance deployments.
 - Token revocation and refresh tokens.
 - Requiring the current password to change a password.
+- Automated dependency and vulnerability scanning in CI.
+
+## Testing
+
+The suite uses **Vitest** as the runner, **Supertest** for HTTP assertions and **mongodb-memory-server** for a real, throw-away MongoDB per test file. No Docker, no Atlas and no `.env` file are needed; `tests/helpers/setupEnv.ts` provides the environment and points uploads at a temporary folder so your real `images/` directory is never touched.
+
+```bash
+npm test                    # whole suite, once
+npm run test:unit           # tests/unit: fast, no database
+npm run test:integration    # tests/integration: Supertest + in-memory MongoDB
+npm run test:watch          # re-run on save
+npm run test:coverage       # coverage to the terminal and coverage/index.html
+npm run typecheck           # tsc --noEmit over src and tests
+```
+
+> The first integration run downloads a MongoDB binary (about 100 MB) into `~/.cache/mongodb-binaries`, so it needs internet access once. Later runs start in about a second.
+
+| Layer       | What it covers                                                                                                                                                                            |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unit        | Joi schemas, password hashing, token and role middleware, `validateObjectId`, the central error handler, env checks, DB connection paths, the email service (transport mocked), seed-data integrity |
+| Integration | CRUD and pagination for books, authors and users; register, login and the full forgot/reset flow; uploads (types, fake content, size, naming); rate limiting; health check, 404/500 handling, helmet, CORS; model rules and indexes; the seeder and its database-name guard |
+
+Tests run in parallel worker processes and each integration file owns its database, so tests never leak data into each other. Email is never sent: `sendEmail` is mocked in the auth tests. See [TESTING.md](TESTING.md) for the file-by-file breakdown, how the app is wired for testing, and troubleshooting.
+
+Before opening a pull request, run:
+
+```bash
+npm run typecheck && npm test
+```
 
 ## Deployment
 
@@ -695,10 +748,12 @@ The reference deployment is **Render** (web service) with **MongoDB Atlas** (dat
 
 ```mermaid
 flowchart LR
-  G[GitHub repo] -->|deploy on push| R[Render web service]
+  G[GitHub repo] -->|deploy on push| R["Render web service<br/>build: tsc → dist/"]
   R --> A[(MongoDB Atlas)]
   U[Uptime monitor] -->|/healthcheck| R
 ```
+
+The service runs the **compiled** output (`node dist/server.js`), not the TypeScript sources.
 
 ### MongoDB Atlas
 
@@ -710,7 +765,10 @@ flowchart LR
 ### Render web service
 
 1. Create a **Web Service** from the GitHub repository.
-2. **Build command:** `npm ci` **Start command:** `npm start`.
+2. **Build command:** `npm ci --include=dev && npm run build` **Start command:** `npm start`.
+
+   > The TypeScript compiler is a dev dependency. Render sets `NODE_ENV=production`, which makes a plain `npm ci` skip dev dependencies and the build fail. `--include=dev` installs them for the build step.
+
 3. Set the environment variables:
 
    | Variable       | Production value                                           |
@@ -728,10 +786,11 @@ flowchart LR
 
 ### First release checklist
 
-1. Seed the database once (see [Seeding the database](#seeding-the-database)), running the command locally with `MONGO_URI` and `SEED_DB_NAME` pointing at Atlas for that run only.
-2. Register a user through the live API and promote it to admin in Atlas (see [Create the first admin](#create-the-first-admin)). Log in again to get a fresh token.
-3. Run the smoke test below.
-4. Add an external uptime monitor on `/healthcheck`.
+1. Run `npm run typecheck && npm test` locally and confirm they pass.
+2. Seed the database once (see [Seeding the database](#seeding-the-database)), running the command locally with `MONGO_URI` and `SEED_DB_NAME` pointing at Atlas for that run only.
+3. Register a user through the live API and promote it to admin in Atlas (see [Create the first admin](#create-the-first-admin)). Log in again to get a fresh token.
+4. Run the smoke test below.
+5. Add an external uptime monitor on `/healthcheck`.
 
 ### Smoke test
 
@@ -749,18 +808,18 @@ curl -i -H "Origin: http://evil.example" $BASE/healthcheck   # no Access-Control
 
 ### Seeding the database
 
-`seeder.js` populates a demo catalog from `data.js`: **6 authors and 16 books**.
+`src/seeder.ts` populates a demo catalog from `src/data.ts`: **6 authors and 16 books**. It runs through `tsx`, a dev dependency, so run it from a development checkout rather than from the deployed service.
 
 | Command               | Effect                                                                                                        |
 | --------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `node seeder -import` | Deletes all books and authors, inserts the authors, then inserts the books linked to the right author by name |
-| `node seeder -delete` | Deletes all books and authors                                                                                 |
+| `npm run seed:import` | Deletes all books and authors, inserts the authors, then inserts the books linked to the right author by name |
+| `npm run seed:delete` | Deletes all books and authors                                                                                 |
 | any other argument    | Prints usage and exits with code 1                                                                            |
 
 Safety and behavior:
 
 - The seeder **only runs when the connected database name equals `SEED_DB_NAME`**. Otherwise it prints both names and exits without changing anything.
-- Each book in `data.js` carries an `authorName`; the seeder resolves it to the real `_id` and stops with a clear error naming the book if an author is missing.
+- Each book in `src/data.ts` carries an `authorName`; the seeder resolves it to the real `_id` and stops with a clear error naming the book if an author is missing.
 - It is idempotent: running it twice leaves the same data.
 - Users are never modified.
 - It exits by itself with code `0` on success and `1` on failure.
@@ -775,11 +834,14 @@ Safety and behavior:
 - **Uploads:** stored on the local disk. Use a persistent volume or object storage if uploads must survive redeploys.
 - **Rate limiter:** in-memory, so it resets on each restart or deploy.
 - **Indexes:** built automatically on startup. On very large collections, consider creating indexes through a controlled migration instead.
+- **Source maps:** the build emits source maps next to the compiled files. Run Node with `--enable-source-maps` if you want stack traces that point at the `.ts` lines.
 
 ## Production Readiness Checklist
 
 | Area                                    | Status | Notes                                                                           |
 | --------------------------------------- | :----: | ------------------------------------------------------------------------------- |
+| Strict TypeScript and build             |   ✅   | `strict` and `noUncheckedIndexedAccess`; `npm run build` emits `dist/`           |
+| Automated tests                         |   ✅   | Vitest unit and integration suites against an in-memory MongoDB                |
 | Input validation (bodies, queries, ids) |   ✅   | Joi plus `validateObjectId`                                                     |
 | Authentication and role checks          |   ✅   | JWT, owner-or-admin, admin-only                                                 |
 | Password storage and reset              |   ✅   | bcrypt, expiring tokens bound to the password hash                              |
@@ -794,9 +856,9 @@ Safety and behavior:
 | Pagination safety and stable ordering   |   ✅   | Default page and limit, max 50, sorted by `createdAt` and `_id`                 |
 | Database indexes                        |   ✅   | `Book.author`, `Book.price`, `User.email`                                       |
 | Reproducible demo data                  |   ✅   | Guarded, idempotent seeder                                                      |
+| Continuous integration                  |   ⬜   | No CI workflow yet; tests and typecheck run locally                             |
 | Graceful shutdown                       |   ⬜   | Needed for zero-downtime deploys                                                |
 | Request logging and monitoring          |   ⬜   | Structured logs, error tracking                                                 |
-| Automated tests and CI                  |   ⬜   | No test suite yet                                                               |
 | Persistent upload storage               |   ⚠️   | Local disk; use a volume or move to object storage                              |
 | Shared rate-limit store                 |   ⚠️   | In-memory counters reset on restart and are per instance                        |
 | Token revocation                        |   ⚠️   | Tokens live 1 day; deleted or demoted users keep access until expiry            |
@@ -807,8 +869,9 @@ Safety and behavior:
 ### Known limitations
 
 - The reset-password page shows a weak-password error as raw JSON.
-- The password-reset views load Bootstrap `6.0.0-alpha.1` from a CDN; it is a pre-release, so consider pinning a stable release.
-- `default.png`, the default author image, is not shipped with the repository. Uploaded images are git-ignored (`images/*`), so commit the placeholder explicitly, for example with a `!images/default.png` rule in `.gitignore`.
+- The password-reset views load Bootstrap `6.0.0-alpha.1` from a CDN with a pinned integrity hash. If that version or hash doesn't match a published file, the browser blocks the stylesheet and the pages render unstyled. Pin a stable Bootstrap release and its matching SRI hash.
+- `UPLOAD_DIR` changes where uploads are written but not where static files are served from (see [Image Uploads](#image-uploads)).
+- The seeder needs dev dependencies (`tsx`), so it is run from a development checkout.
 - Duplicate registration is guarded by a lookup and by the unique index; under a race the loser receives `409`.
 - Pagination uses `skip`, which gets slower on very deep pages of very large collections.
 
@@ -818,14 +881,18 @@ Safety and behavior:
 | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | Server exits right after start with `missing variables` | One or more of `MONGO_URI`, `JWT_SECRET`, `BASE_URL` is not set. The message lists every missing name.               |
 | Server exits after `Failed to connect to db`            | Check `MONGO_URI`, credentials, the database user's password encoding and Atlas network access.                      |
+| `npm start` fails with `Cannot find module .../dist/server.js` | The project hasn't been compiled. Run `npm run build` first.                                                  |
+| Render build fails with `tsc: not found`                | Dev dependencies were skipped. Use the build command `npm ci --include=dev && npm run build`.                        |
+| `npm run typecheck` reports errors after pulling        | Run `npm install` so the type packages match `package-lock.json`, then re-run.                                       |
 | First request after a while is very slow                | A free instance was asleep. It wakes on the first request.                                                           |
 | Seeder prints `Refusing to run`                         | The database in `MONGO_URI` differs from `SEED_DB_NAME`. Make them match, or you are pointing at the wrong database. |
 | Login returns 500 with a JWT error                      | `JWT_SECRET` is missing from the environment.                                                                        |
 | `429 Too many requests`                                 | More than 10 requests to the auth routes from one IP in 15 minutes. Wait for the window to pass.                     |
-| Everyone gets `429` at the same time in production      | `trust proxy` doesn't match the proxy setup, so all users share one IP. Adjust the value in `app.js`.                |
+| Everyone gets `429` at the same time in production      | `trust proxy` doesn't match the proxy setup, so all users share one IP. Adjust the value in `src/app.ts`.            |
 | Reset email never arrives                               | Check the `SMTP_*` values and the server log. Send failures are logged but hidden from the user.                     |
 | Reset link starts with `undefined/`                     | `BASE_URL` is missing.                                                                                               |
 | Reset link says "Invalid or expired reset link"         | The link is older than 15 minutes, the password already changed, or the URL was altered. Request a new link.         |
+| Reset or forgot-password page looks unstyled            | The Bootstrap CDN link or its integrity hash is wrong; see Known limitations.                                        |
 | `400 Invalid id`                                        | The `:id` isn't a 24-character hex ObjectId.                                                                         |
 | `400 "<name>" is not allowed`                           | The request has a field or query parameter that endpoint doesn't accept.                                             |
 | `400 "limit" must be less than or equal to 50`          | The maximum page size is 50.                                                                                         |
@@ -833,23 +900,30 @@ Safety and behavior:
 | `GET /api/author` returns 404                           | The route is `/api/authors` (plural).                                                                                |
 | Uploaded images disappear after a redeploy              | The host's disk is ephemeral. Mount a persistent volume at `images/`.                                                |
 | Browser blocks calls from your front end                | Add the front end's exact origin (scheme, host and port, no trailing slash) to `CORS_ORIGINS` and redeploy.          |
+| Tests hang or time out on the first run                 | The MongoDB binary is downloading. Re-run, or see [TESTING.md](TESTING.md) for proxy and offline options.            |
 
 ## Development Guide
 
 ### Scripts
 
-| Command               | Description                                          |
-| --------------------- | ---------------------------------------------------- |
-| `npm run dev`         | Start with nodemon (auto-restart)                    |
-| `npm start`           | Start with plain `node app.js`                       |
-| `node seeder -import` | Reset and seed demo data (guarded by `SEED_DB_NAME`) |
-| `node seeder -delete` | Remove all books and authors                         |
-
-There is no `npm test` yet.
+| Command                    | Description                                                         |
+| -------------------------- | ------------------------------------------------------------------- |
+| `npm run dev`              | Run `src/server.ts` with `tsx watch` (auto-restart on changes)      |
+| `npm run build`            | Compile `src/` to `dist/` with `tsc -p tsconfig.build.json`         |
+| `npm start`                | Run the compiled app: `node dist/server.js`                         |
+| `npm run typecheck`        | Type-check `src` and `tests` without emitting files                 |
+| `npm test`                 | Run the whole test suite once                                       |
+| `npm run test:unit`        | Unit tests only                                                     |
+| `npm run test:integration` | Integration tests only                                              |
+| `npm run test:watch`       | Re-run tests on save                                                |
+| `npm run test:coverage`    | Tests with a V8 coverage report                                     |
+| `npm run seed:import`      | Reset and seed demo data (guarded by `SEED_DB_NAME`)                |
+| `npm run seed:delete`      | Remove all books and authors                                        |
 
 ### Conventions
 
-- ES Modules everywhere (`"type": "module"`); import paths include the `.js` extension.
+- TypeScript with `strict` and `noUncheckedIndexedAccess`; no `any` without a reason. ES Modules everywhere (`"type": "module"`).
+- Relative imports use the **`.ts`** extension (for example `./app.ts`), consistently across `src` and `tests`.
 - Routes declare paths and middleware only; logic lives in controllers.
 - Each controller handler is wrapped in `expressAsyncHandler` and documented with a JSDoc block (`@description`, `@route`, `@method`, `@access`).
 - Validate the body or query with Joi **first**, then touch the database. Read values from the validated `value` object so defaults apply. Return `400 { message }` for validation errors and `404 { message }` for missing resources.
@@ -857,19 +931,22 @@ There is no `npm test` yet.
 - Routes with an `:id` param place `validateObjectId` after the auth middleware.
 - Never return `password`. Queries that need it must use `.select("+password")` explicitly.
 - Add a rate limiter to any new public route that sends email or checks credentials.
+- Keep `createApp()` free of side effects (no DB connection, no `listen`) so it stays testable.
+- Every behavior change ships with a test, and `npm run typecheck && npm test` must pass.
 
 ### Adding a new resource
 
-1. Create the Mongoose model in `models/<name>/`, adding indexes for fields you filter or join on.
-2. Add the Joi schemas in `controllers/<name>/utils/`.
+1. Create the Mongoose model in `src/models/<Name>.model.ts`, adding indexes for fields you filter or join on.
+2. Add the Joi schemas in `src/controllers/<name>/utils/`.
 3. Write the controller with JSDoc and `expressAsyncHandler`.
-4. Add the router in `routes/<name>/`, choosing the right `verifyToken*` middleware and adding `validateObjectId` for `:id` routes.
-5. Mount the router in `app.js` under `/api/<name>`.
-6. Document the endpoints in this README and add a changelog entry.
+4. Add the router in `src/routes/<name>.route.ts`, choosing the right `verifyToken*` middleware and adding `validateObjectId` for `:id` routes.
+5. Mount the router in `src/app.ts` under `/api/<name>`.
+6. Add unit tests for the validators and integration tests for the endpoints.
+7. Document the endpoints in this README and add a changelog entry.
 
 ## Roadmap
 
-1. **Quality:** automated tests (unit and integration) and CI.
+1. **Quality:** CI pipeline (typecheck, tests, coverage threshold, dependency audit).
 2. **Operations:** graceful shutdown, request logging, error monitoring, Docker and docker-compose.
 3. **Scaling:** Redis for caching the catalog and for a shared rate-limit store; object-storage uploads.
 4. **Catalog:** search, sorting options, cursor-based pagination, compound indexes for filtered and sorted lists.
@@ -878,6 +955,26 @@ There is no `npm test` yet.
 7. **Features:** cart and orders with transactions, inventory.
 
 ## Changelog
+
+### v3.0.0
+
+TypeScript release: the whole project was migrated from JavaScript to TypeScript and an automated test suite was added. **The HTTP API is unchanged**: endpoints, validation rules, status codes and JSON shapes are the same as v2.4.0, so existing clients keep working.
+
+**Changes that affect how you build, run and deploy**
+
+- The code now lives in `src/`. `app.js` is replaced by `src/app.ts` (the app factory) and `src/server.ts` (the entry point).
+- Production runs compiled output: `npm run build` then `npm start` (`node dist/server.js`). Render's build command must be `npm ci --include=dev && npm run build`.
+- Development uses `npm run dev` (`tsx watch`) instead of nodemon.
+- The seeder is now `npm run seed:import` and `npm run seed:delete` (previously `node seeder -import` and `-delete`).
+- `nodemon` is removed; `typescript`, `tsx` and the `@types/*` packages are new dev dependencies.
+
+**Added**
+
+- **TypeScript:** strict mode with `noUncheckedIndexedAccess`; typed models, middleware and controllers; an Express `Request` augmentation for the authenticated user; separate `tsconfig.json` (src and tests) and `tsconfig.build.json` (src only, with source maps).
+- **Tests:** Vitest unit and integration suites with Supertest and `mongodb-memory-server`, covering validators, auth middleware, error handling, all resources, the password-reset flow, uploads, rate limiting, the health check, model rules and the seeder. Scripts for unit, integration, watch and coverage runs, plus `npm run typecheck`.
+- **Testability refactor:** `createApp()` builds the app without I/O, `createLimiter(limit)` and `createApp({ rateLimitMax })` make the rate limit injectable, and `UPLOAD_DIR` lets uploads be redirected.
+- **Docs:** [TESTING.md](TESTING.md), plus Testing and TypeScript sections in this README.
+- `images/default.png` is now committed (the rest of `images/` stays git-ignored).
 
 ### v2.4.0
 
